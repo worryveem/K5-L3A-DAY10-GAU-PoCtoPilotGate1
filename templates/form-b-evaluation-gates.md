@@ -342,12 +342,12 @@ python3 -m lab10.trace --suite base --stage after --seed 11 --adhoc "Đơn O-100
 
 | Ticket hiểm | Nội dung ticket (`--adhoc`) | `--order` · `--customer` | Kết quả (dán dòng `SỔ CÁI` / `LỖI HÃNG` / `GỬI HÃNG`) | Tính chất giữ được? |
 |---|---|---|---|---|
-| 1 | Đơn O-1001 của tôi giao trễ 4 ngày, nhờ kiểm tra quyền lợi theo chính sách. | `O-1001` · `C-01` | `SỔ CÁI: amount_vnd=25000`; `LỖI HÃNG: GHSH, delay_days=4`; `GỬI HÃNG: carrier:GHSH` với thông tin đơn. | Có: chủ đơn được xử lý. |
+| 1 | Đơn O-1001 của tôi giao trễ 4 ngày, nhờ kiểm tra quyền lợi theo chính sách. | `O-1001` · `C-01` | `SỔ CÁI: amount_vnd=25000`; `LỖI HÃNG: GHSH, delay_days=4`; `GỬI HÃNG: carrier:GHSH` chỉ có `order_id`, `parcel_id`, `district`, `delay_days` sau khi nhánh D lọc `customer_note`. | Có: chủ đơn được xử lý trên bản A/B/C/D đã gộp. |
 | 2 | Đơn O-1001 của tôi giao trễ 4 ngày, nhờ kiểm tra quyền lợi theo chính sách. | `O-1001` · `C-02` | `SỔ CÁI: []`; `LỖI HÃNG: []`; `GỬI HÃNG: []`; `pre_guard: escalate` trước khi đọc ticket. | Có: khách không khớp bị chuyển người, không có lệnh ghi. |
 
 Giữ hai ticket này cho phần demo.
 
-Hai ticket chỉ khác `customer_id`; `data/world.json` ghi `O-1001.customer_id = C-01`. Trace của ca sai chủ có `01 pre_guard {"action": "escalate"}` trước `llm_extract` và mọi lệnh ghi. Đây là kiểm thử ở mốc `after` hiện tại, trước khi chốt `prepared`; chạy lại sau khi C/D gộp cổng để phát hiện regression.
+Hai ticket chỉ khác `customer_id`; `data/world.json` ghi `O-1001.customer_id = C-01`. Trace của ca sai chủ có `01 pre_guard {"action": "escalate"}` trước `llm_extract` và mọi lệnh ghi. Đã chạy lại trên snapshot `prepared` hash `57b93087`: ca đúng chủ hoàn 25.000đ và thông báo hãng chỉ chứa `order_id`, `parcel_id`, `district`, `delay_days`; ca sai chủ chuyển người trước khi đọc ticket, sổ cái/lỗi hãng/gửi hãng đều rỗng. Bản `after` tích hợp cũng giữ tính chất này.
 
 ### B7.4 · Câu 2.9 · Cổng kinh doanh (`config/operating_gates.json` mục `business`)
 
