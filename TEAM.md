@@ -115,8 +115,6 @@ Vận hành và pháp lý (D): nhánh `_gate_carrier` (`file_carrier_fault`, `no
 
 ## VuDucTam-2A202603522
 
-*Mục này được cập nhật với hỗ trợ AI theo đề nghị của Vũ Đức Tâm; bằng chứng đã được đối chiếu với trace và report tại các mã lần chạy bên dưới.*
-
 ### Phần việc phụ trách
 
 Kỹ sư cổng B, phụ trách monitor và kiểm thử: `lab10/monitors.py`; Phiếu B mục B0 (dòng 5), B2, B7.2, B7.3; thẻ S5, Phiếu C mục C2 (soát lỗi), C6 (fault tree trước), C8 (monitor chi phí theo kho), C9 (fault tree sau).
