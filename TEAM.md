@@ -50,3 +50,13 @@ Trưởng nhóm, Kỹ sư cổng A: khung chia hàm, `pre_guard`, điều phối
 ### Exit ticket
 
 Một điều học được, một điều còn chưa chắc.
+
+## Ghi nhận bổ sung vai C
+
+Phần C được thực hiện với trợ lý AI theo yêu cầu trong phiên làm việc này; chưa tự gán họ tên/MSSV cho người phụ trách C. Thành viên nhận vai C cần bổ sung mục cá nhân của mình và giải thích được các kiểm tra khi demo.
+
+- Hoàn thiện `_gate_refund` trong `lab10/guards.py`: đối chiếu quyền lợi với DB và chính sách theo ngày; kiểm tiền/payer, định danh, phê duyệt; chống hoàn trùng và retry; kiểm trần tự động của khách và ngân sách ngày.
+- Giữ nguyên phần điều phối/pre-guard của A và các hàm hãng/reply của D; không đổi tiêu chí đã ký, không chốt vòng 1 thay cả nhóm.
+- Báo cáo cuối: `runs/R-base-after-20261118-155133-d2681c/report.json`, 110/110 đạt; hoàn sai 0đ, lỗi hãng oan 0, lộ PII 0, không có ca mới hỏng; chi phí 4.278đ/ticket, ROI 1,34, 0 ca ùn. Tỉ lệ chuyển người 23,64% còn cao hơn mục tiêu nên có 20%.
+- Kiểm tra: 13 test công khai và 15 test C bổ sung đạt. Script cục bộ: `runs/role_c_checks.py`. Bằng chứng và giới hạn đã ghi ở Phiếu B mục B0/B7.1. Chưa chạy test ẩn hay thẻ sự cố vì chưa có gói.
+- Bài học: chặn lần ghi retry phải giữ đúng trạng thái tiền đã ghi. Điểm cần đo tiếp: trần theo ngày cần ngày giao dịch thật; chống ghi trùng trong production cần giao dịch nguyên tử ở backend.
