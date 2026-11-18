@@ -31,12 +31,13 @@ Mọi con số trong quyết định Gate 1 phải trỏ về một dòng ở đ
 |---|---|---|---|---|---|---|---|---|
 | 1 | `R-base-before-20261118-151553-0176af` | base · base | baseline, chưa có cổng | 0,9909 [0,9727; 1,0] | 0,9545 | 20.000đ · 1 · 0 | 0,2273 | Chưa đạt hai ngưỡng an toàn; chưa đủ căn cứ Tiếp tục. |
 | 2 | `R-base-after-20261118-151859-d0c9b2` | base · after | A: kiểm khách–đơn, ghim chính sách theo ngày, chặn chỉ dẫn không đáng tin trước ghi; chưa gộp nhánh C/D | 0,9909 [0,9727; 1,0] | 0,9545 | 20.000đ · 1 · 0 | 0,2273 | Không có ca mới hỏng; lỗi cũ T-002@55 còn chờ nhánh refund/hãng. |
-| 3 | | base · prepared | (cổng vòng 1 đã chốt) | | | | | |
+| 3 | `R-base-prepared-20261118-172326-609dda` | base · prepared | Chốt code/config vòng 1 tại thời điểm thực tế 17:23:26 GMT+7; gói thẻ đã được pull trước đó | 1,0 [1,0; 1,0] | 1,0 | 0đ · 0 · 0 | 0,2364 | Đạt bộ nền, không có ca mới hỏng; chưa đo S5, xem ghi chú trình tự ở B8. |
 | 4 | `R-base-after-20261118-152115-2ef9f0` | base · after | Xác nhận bản A đã gộp main, hash nguồn cuối cùng; chưa có code C/D | 0,9909 [0,9727; 1,0] | 0,9545 | 20.000đ · 1 · 0 | 0,2273 | Không có ca mới hỏng; độ phủ 100%, còn T-002@55. Chưa phải prepared. |
 | 5 | `R-base-after-20261118-154805-372946` | base · after | B: thêm ba monitor production; không đổi cổng hoặc config | 0,9909 [0,9727; 1,0] | 0,9545 | 20.000đ · 1 · 0 | 0,2273 | 13 test công khai đạt; chỉ còn lỗi cũ T-002@55, monitor đã cho giá trị trên 110 lần chạy. |
 | 6 | `R-base-after-20261118-155133-d2681c` | base · after | C: hoàn thiện `_gate_refund` (quyền lợi DB, phê duyệt, chống ghi trùng, trần tự động); giữ nguyên A và nhánh D | 1,0 [1,0; 1,0] | 1,0 | 0đ · 0 · 0 | 0,2364 | Đạt 110/110, không có ca mới hỏng. Chi phí 4.278đ/ticket, ROI 1,34, 0 ca ùn, độ phủ 100%. Chưa phải prepared; mục tiêu nên có chuyển người ≤20% chưa đạt. |
 | 7 | `R-base-after-20261118-162922-3b333c` | base · after | `hongduc`: tích hợp monitor B từ `origin/main` (`b0e7fba`) với cổng hoàn tiền C | 1,0 [1,0; 1,0] | 1,0 | 0đ · 0 · 0 | 0,2364 | 13 test công khai và 15 test C đạt; ba monitor mới chạy không lỗi. Không cần đổi code C sau merge. Chưa chốt prepared. |
 | 8 | `R-base-after-20261118-165944-796efc` | base · after | D: tích hợp cổng `_gate_carrier`, `_gate_reply` và `config/operating_gates.json` (`operations`, `legal`) với A, B, C | 1,0 [1,0; 1,0] | 1,0 | 0đ · 0 · 0 | 0,2364 | Đạt 110/110, 0 hoàn sai, 0 lỗi hãng, 0 PII, 0 ca ùn; chi phí 4.495đ/ticket, ROI 1,22, đạt toàn bộ `required` và `business_ops`. |
+| 9 | `R-base-after-20261118-172220-609dda` | base · after | A tích hợp bản B/C/D đã pull và hoàn thiện trần business từ dữ liệu vận hành trước checkpoint | 1,0 [1,0; 1,0] | 1,0 | 0đ · 0 · 0 | 0,2364 | 110/110 đạt, không có ca mới hỏng, độ phủ 100%, chi phí 4.495đ/ticket, ROI 1,22, 0 ca ùn, không vượt trần. |
 
 ---
 
@@ -220,10 +221,10 @@ Trạng thái: **Xong** (có bằng chứng) · **Chưa** · **Không áp dụng
 | 3 | Bảo mật | Một vòng HAZOP với guideword PERTURBED (Phiếu B mục B4): chữ nào đi vào model mà không do LogiX viết | `ticket.text`, `checkout_note`, chống prompt injection | Xong | HAZOP B4 (PERTURBED) + `pre_guard` / `_gate_untrusted_instructions` (`R-base-after-20261118-152115-2ef9f0`) | Đỗ Minh Hoàng (A) |
 | 4 | Quyền hạn | `config/switches.json` + guard trước lệnh ghi; thẻ S2, S8 có thêm mục mức kiểm soát (Phiếu C mục C3) | Công tắc từng tool ghi + đầy đủ 4 nhánh `write_gate` | Xong | `config/switches.json` + `lab10/guards.py` (`pre_guard`, `_gate_refund`, `_gate_carrier`, `_gate_reply`, `R-base-after-20261118-165944-796efc`) | Bùi Lê Công Tuấn (D) / Phạm Đức Hồng Đức (C) |
 | 5 | Hiệu năng, hạ tầng | Đội tự ước tính; HAZOP guideword INCAPABLE: LLM không trả lời thì sao; số người duyệt và số ca mỗi giờ | 429 retry/fail-open, công suất 6 ca/giờ (`reviewers_on_shift = 1`) | Xong | HAZOP B4 (INCAPABLE) + `config/operating_gates.json` (`operations`) + `R-base-after-20261118-165944-796efc` (`wait_max_min: 0.0`, `stuck: 0`) | Bùi Lê Công Tuấn (D) |
-| 6 | Chi phí | Khối "kinh doanh và vận hành" của report: chi phí mỗi ticket so với làm tay, ROI, tiền LLM ticket đắt nhất; `config/operating_gates.json` mục `business` | Chi phí 4.495đ <= 8.000đ, LLM 770đ <= 1.500đ, ROI 1,22 >= 0,25 | Chưa | `R-base-after-20261118-165944-796efc`; `[Chờ điền business.* và B7.4 của C]` | Phạm Đức Hồng Đức (C) |
+| 6 | Chi phí | Khối "kinh doanh và vận hành" của report: chi phí mỗi ticket so với làm tay, ROI, tiền LLM ticket đắt nhất; `config/operating_gates.json` mục `business` | Chi phí 4.495đ <= 8.000đ, LLM 770đ <= 1.500đ, ROI 1,22 >= 0,25 | Đạt trên bộ nền; chưa đo S5 | `R-base-prepared-20261118-172326-609dda`; business và B7.4 đã điền | Phạm Đức Hồng Đức (C) / Đỗ Minh Hoàng (A) |
 | 7 | Vận hành | Runbook (Phiếu B mục B7.5–B7.6) + `config/operating_gates.json` mục `operations` (PIC, người duyệt, số người trực, điều kiện dừng, kênh báo tin) + metric trong `monitors.py` | PIC `NV-TUNG`, duyệt `NV-HANH`, kênh `#logix-pilot-ops`, 3 monitor mới | Xong | `B7.5–B7.6` + `config/operating_gates.json` (`operations`) + `lab10/monitors.py` (`R-base-after-20261118-165944-796efc`) | Bùi Lê Công Tuấn (D) |
 | 8 | Con người, pháp lý | Bên thứ ba (hãng, tài xế, shop, người nhận quà, người đứng tên duyệt); `config/operating_gates.json` mục `legal`; thẻ S6, S7, S8 có mục riêng ở Phiếu C mục C3 | Chặn PII gửi hãng, ghi lỗi phải có `delay_cause`, trần lỗi hãng/ngày | Xong | `config/operating_gates.json` (`legal`) + `_gate_carrier` (`R-base-after-20261118-165944-796efc`: `wrongful_carrier_faults = 0`, `pii_leaks = 0`) | Bùi Lê Công Tuấn (D) |
-| 9 | Quyết định | Câu tiêu chí (Phiếu A mục A4) + hash Bản tiêu chí đã ký + quyết định Gate 1 (Phiếu B mục B8, Phiếu C mục C12) | Hash tiêu chí + chốt vòng 1 + quyết định v1 | Chưa | Commit ký `abf47a7`; `[Chờ chốt checkpoint và v1 ở B8]` | Đỗ Minh Hoàng (A) / Phạm Đức Hồng Đức (C) |
+| 9 | Quyết định | Câu tiêu chí (Phiếu A mục A4) + hash Bản tiêu chí đã ký + quyết định Gate 1 (Phiếu B mục B8, Phiếu C mục C12) | Hash tiêu chí + chốt vòng 1 + quyết định v1 | Đã ghi v1; có lệch thứ tự chốt | Commit ký `abf47a7`, checkpoint `57b93087`; thời điểm thực và hạn chế trình tự ở B8 | Đỗ Minh Hoàng (A) / Phạm Đức Hồng Đức (C) |
 
 Ô "Chưa" có rủi ro cao → chuyển thành một dòng Risk register (Phiếu C mục C10).
 
@@ -349,10 +350,12 @@ Mỗi con số kèm một câu lý do, lấy từ `data/world.json` → `ops_lim
 
 | Khoá | Giá trị bàn đặt | Lý do (một câu, có số) |
 |---|---|---|
-| `business.daily_refund_cap_vnd` | | |
-| `business.cost_budget_per_ticket_vnd` | | |
-| `business.pilot_scope` (all / warehouse / percent) | | |
-| `business.roi_min` | | |
+| `business.daily_refund_cap_vnd` | 2.000.000đ/ngày | Bằng `ops_limits.daily_auto_refund_budget_vnd`; không cho config nới quá ngân sách Finance. |
+| `business.cost_budget_per_ticket_vnd` | 1.500đ/ticket | Bằng trần LLM `ops_limits.max_llm_cost_per_ticket_vnd`, tách biệt với trần chi phí toàn phần 8.000đ/ticket trong tiêu chí đã ký. |
+| `business.pilot_scope` (all / warehouse / percent) | `mode: all`, `percent: 100`, `warehouses: []` | Giữ độ phủ 100% để đo toàn bộ 22 ticket bộ nền; không loại ca khó để đạt điểm. Chỉ thay phạm vi sau khi có bằng chứng phân khúc và đường xử lý thủ công. |
+| `business.roi_min` | 0,25 | Đồng nhất ngưỡng đã ký; với mức làm tay 10.000đ và chi phí toàn phần 8.000đ, ROI theo lab là (10.000 - 8.000) / 8.000 = 0,25. |
+
+Trưởng nhóm hoàn thiện mục business trong lần tích hợp `R-base-after-20261118-172220-609dda`; tiêu chí chấp nhận đã ký giữ nguyên.
 
 ### B7.5 · Câu 2.10 · Cổng con người, vận hành, pháp lý + Runbook phần 1–3
 
@@ -373,7 +376,7 @@ Phần 1–3 và mục Giờ cao điểm viết ở vòng 1. Phần 4–5 viết
 | Người giữ công tắc tắt từng thao tác ghi | Lê Thanh Tùng (`NV-TUNG`) | Tắt/bật từng thao tác ghi trong `config/switches.json` khi chạm điều kiện dừng | `#logix-pilot-ops` |
 | Người nhận khiếu nại của bên thứ ba (hãng, shop, người nhận quà) | Phạm Kiều Oanh (`NV-OANH`) | Tiếp nhận đối soát sai lệch sổ cái với shop/hãng, phối hợp `NV-TUNG` tắt `file_carrier_fault` / `notify_carrier` nếu có lỗi oan hoặc lộ PII | `#logix-pilot-ops` |
 
-Số người trực duyệt mỗi ca: `1` · Mỗi giờ duyệt được: `6` ca · Phạm vi pilot: `[Chờ C chốt trong business.pilot_scope]` (tất cả / kho nào / bao nhiêu phần trăm)
+Số người trực duyệt mỗi ca: `1` · Mỗi giờ duyệt được: `6` ca · Phạm vi pilot: `all`, `100%` theo `business.pilot_scope`; đây là phạm vi đánh giá hiện tại, không phải xác nhận đã triển khai cho khách thật.
 
 #### Runbook 2 · Nhìn con số nào, ngưỡng nào thì làm gì
 
@@ -434,24 +437,26 @@ Chỉ chọn Tiếp tục khi mọi chỉ số bắt buộc đều đạt.
 Ba câu tự vấn trước khi viết: (1) Rủi ro còn lại có chấp nhận được như hiện trạng không? (2) Cần thêm biện pháp nào, tốn
 bao nhiêu thời gian? (3) Có phần nào của dự án không nên làm tiếp?
 
-| | **v1** (phút 105–115, TRƯỚC khi nhận thẻ sự cố) |
+| | **v1** (chốt thực tế 2026-11-18 17:23:26 GMT+7; có lệch thứ tự, xem ghi chú bên dưới) |
 |---|---|
-| Commit ký tiêu chí (message `Sign acceptance criteria`; hash commit, tuỳ chọn) | |
-| Hash chốt cổng vòng 1 (8 ký tự lệnh `lab10.checkpoint` in ra, tuỳ chọn) | |
-| Mã lần chạy dùng làm bằng chứng | bộ nền, mốc base: ________ · bộ nền với cổng vòng 1 (prepared): ________ |
-| Còn dòng "vượt trần" nào trong report? (hàng chờ, chi phí, ROI, trần tiền, pháp lý) | |
-| Kho hoặc hãng có số xấu nhất: ____. Nếu chỉ nhìn phân khúc này, quyết định có đổi không? *(Đọc khối "theo kho và hãng" ở cuối output `lab10.eval` / `lab10.grade`, hoặc mục `by_segment` trong `report.json`.)* | |
-| Quyết định (khoanh một) | Tiếp tục · Thu hẹp · Cải tiến thêm · Dừng |
-| Bằng chứng 1: mã lần chạy + chỉ số bắt buộc nào đạt / chưa | |
-| Bằng chứng 2 | |
-| Bằng chứng 3 | |
-| Khớp dòng nào trong `decision_rule` đã ký? | |
-| Nếu Thu hẹp: cắt phần nào, vì sao | |
-| Nếu Cải tiến thêm: giả thuyết cụ thể + hạn | |
-| Nếu Dừng: bài học ghi lại | |
-| Một bằng chứng còn thiếu (thứ bộ nền chưa đo được) | |
-| Ngày quyết định lại (trừ khi Dừng) | |
-| PIC ký | |
+| Commit ký tiêu chí (message `Sign acceptance criteria`; hash commit, tuỳ chọn) | `abf47a7`; hash tiêu chí `e781e465`, kiểm tra còn nguyên. |
+| Hash chốt cổng vòng 1 (8 ký tự lệnh `lab10.checkpoint` in ra, tuỳ chọn) | `57b93087` |
+| Mã lần chạy dùng làm bằng chứng | bộ nền base: `R-base-before-20261118-151553-0176af`; bản tích hợp after: `R-base-after-20261118-172220-609dda`; prepared: `R-base-prepared-20261118-172326-609dda`. |
+| Còn dòng "vượt trần" nào trong report? (hàng chờ, chi phí, ROI, trần tiền, pháp lý) | Không có vượt trần trên bộ nền prepared. Chuyển người 23,64% cao hơn mục tiêu nên có 20%; tính cả kiểm mẫu, 27,27% vào hàng chờ, 6 ca/ngày, chưa có ca ùn. |
+| Kho hoặc hãng có số xấu nhất: ____. Nếu chỉ nhìn phân khúc này, quyết định có đổi không? *(Đọc khối "theo kho và hãng" ở cuối output `lab10.eval` / `lab10.grade`, hoặc mục `by_segment` trong `report.json`.)* | Nhóm không xác định kho (`?`) tốn 10.200đ/ticket > làm tay 10.000đ; chưa gán nhóm này cho kho cụ thể. Trong các kho xác định, DN cao nhất 4.613đ/ticket. Các hãng đều pass 1,0 và không có tác hại. Nếu chỉ nhìn nhóm `?`, cần cải tiến phân luồng/chi phí, không mở pilot riêng cho nhóm này. |
+| Quyết định (khoanh một) | **Cải tiến thêm** |
+| Bằng chứng 1: mã lần chạy + chỉ số bắt buộc nào đạt / chưa | `R-base-prepared-20261118-172326-609dda`: pass_rate = pass_k = 1,0; hoàn sai = lỗi hãng oan = lộ PII = 0; đạt toàn bộ ngưỡng bắt buộc trên bộ nền. |
+| Bằng chứng 2 | Cùng report: chi phí 4.495đ <= 8.000đ, ROI 1,22 >= 0,25, 0 ca ùn, LLM cao nhất 770đ <= 1.500đ; độ phủ 100%. |
+| Bằng chứng 3 | `lab10.gate` so prepared với baseline xác nhận không có ca mới hỏng. Gói thẻ đã được tải về và nhóm xác nhận S5 nhưng chưa có phép đo S5 tại thời điểm ghi v1; chưa đủ bằng chứng cho điều kiện Tiếp tục trên gói sự cố đã phát. |
+| Khớp dòng nào trong `decision_rule` đã ký? | Cải tiến thêm: chưa đủ bằng chứng cho Tiếp tục trên gói đã phát, chưa có căn cứ chọn Dừng; cần giả thuyết kiểm chứng và hạn đánh giá lại, giữ nguyên tiêu chí. |
+| Nếu Thu hẹp: cắt phần nào, vì sao | Chưa chọn Thu hẹp; phạm vi đánh giá vẫn 100%, chưa loại kho theo suy đoán. |
+| Nếu Cải tiến thêm: giả thuyết cụ thể + hạn | Giả thuyết cần kiểm: chi phí trung bình bộ nền che nhóm yêu cầu phải chuyển người hoặc tốn nhiều bước đọc; trần LLM riêng chưa chứng minh được chi phí toàn phần trên S5. Chạy grade S5 trước sửa, phân tích theo kho/tải duyệt rồi thử biện pháp có căn cứ; đánh giá lại trước 2026-11-19 15:00 GMT+7. |
+| Nếu Dừng: bài học ghi lại | Chưa chọn Dừng; bộ nền chưa có bằng chứng chạm điều kiện Dừng đã ký. |
+| Một bằng chứng còn thiếu (thứ bộ nền chưa đo được) | Kết quả S5, tải và chi phí trên tình huống sự cố; test ẩn và tính đúng của các giả định khi có khách thật. |
+| Ngày quyết định lại (trừ khi Dừng) | 2026-11-19 15:00 GMT+7, hoặc sớm hơn sau khi có grade S5 và kiểm regression. |
+| PIC ký | Đỗ Minh Hoàng - 2A202603554, trưởng nhóm. |
+
+Ghi chú trình tự thực tế: commit `a8852d1` đã merge gói thẻ lúc 2026-11-18 17:17:11 GMT+7; checkpoint được tạo sau đó lúc 17:23:26 theo `config/round1.lock`. Trong phiên xử lý này, nội dung các thẻ chưa được mở trước checkpoint và chưa chạy grade sự cố trước khi ghi v1; không có bằng chứng để xác nhận toàn nhóm chưa biết nội dung thẻ. Vì vậy không tuyên bố đã chốt trước khi nhận thẻ theo yêu cầu của lab; cần trình bày lệch thứ tự này với Lab Coach. Giữ nguyên thời gian thật, lock và lịch sử Git.
 
 Xong v1 thì lưu và đẩy một bản (sau mốc này không sửa cột v1):
 

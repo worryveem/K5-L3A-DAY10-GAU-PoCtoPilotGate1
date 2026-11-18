@@ -29,7 +29,7 @@ lab10.helpers: db_delay_days, ticket_parcel, effective_policy, entitlement_vnd, 
 
 Phần A: kiểm định danh, ghim chính sách theo ngày và kiểm chỉ dẫn không đáng tin trước ghi.
 Phần C: _gate_refund kiểm quyền lợi DB, phê duyệt, chống ghi trùng và trần tự động.
-Các hàm _gate_carrier, _gate_reply dành cho D hoàn thiện.
+Phần D: _gate_carrier, _gate_reply kiểm lỗi hãng, dữ liệu gửi đi và số tiền báo khách.
 """
 import re
 
