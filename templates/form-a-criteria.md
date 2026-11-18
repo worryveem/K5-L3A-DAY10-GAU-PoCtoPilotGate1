@@ -48,12 +48,12 @@ trợ lý có đang gây thiệt hại cho bên ngoài LogiX không; không có 
 
 | | Offline, cho MỘT bước (câu 1.3) | Telemetry production (câu 1.4) |
 |---|---|---|
-| **Bước / hành vi được đo** | | |
-| **Thước đo** (một câu, có đơn vị) | | |
-| **Dữ liệu** (lấy ở đâu, bao nhiêu, ai gán nhãn) | | |
-| **Cách tính** (công thức, mẫu số, cách xử lý ca thiếu dữ liệu) | | |
+| **Bước / hành vi được đo** | Chọn phiên bản chính sách hoàn tiền có hiệu lực tại ngày mô phỏng `as_of`. | |
+| **Thước đo** (một câu, có đơn vị) | Tỉ lệ lần chọn sai phiên bản chính sách, đơn vị %. | |
+| **Dữ liệu** (lấy ở đâu, bao nhiêu, ai gán nhãn) | Kế hoạch đo trên bộ nền: 22 ticket trong `data/tickets.jsonl` × 5 seed trong `lab10/__init__.py`. Sau khi ký tiêu chí mới lấy sự kiện `policy.policy_id` từ trace của từng lần chạy. Nhãn tham chiếu được xác định từ bảng `policies` và `as_of` trong `data/world.json`, theo khoảng hiệu lực ngày; A phụ trách đối chiếu quy tắc với `H.effective_policy`. | |
+| **Cách tính** (công thức, mẫu số, cách xử lý ca thiếu dữ liệu) | Với mỗi lần chạy có sự kiện `policy` và đúng một chính sách có khoảng hiệu lực chứa `as_of`, so `policy_id` đã chọn với mã tham chiếu. Tỉ lệ sai = 100 × số lần chọn sai / số lần đủ dữ liệu để so. Lần chưa tới bước chọn chính sách, thiếu dữ liệu hoặc không có duy nhất một chính sách tham chiếu được đếm riêng theo nguyên nhân, không đưa vào mẫu số. Mẫu số bằng 0 thì báo không tính được, không ghi 0%. | |
 | **Khung thời gian / ngưỡng báo động** | (không áp dụng) | |
-| **Điểm mù** (thước đo này KHÔNG thấy gì) | | |
+| **Điểm mù** (thước đo này KHÔNG thấy gì) | Không xác nhận chính nội dung chính sách hoặc ngày `as_of` đã đúng ngoài thực tế; không đo việc tính tiền, kiểm phê duyệt hay ghi sổ sau khi chọn chính sách. | |
 
 **Ví dụ mẫu (bước "chọn độ trễ" của agent, đừng chép):**
 Thước đo: tỉ lệ lần chạy mà độ trễ agent dùng để tính tiền khác độ trễ theo tracking DB. Dữ liệu: sự kiện `proposal.delay_days_used`
