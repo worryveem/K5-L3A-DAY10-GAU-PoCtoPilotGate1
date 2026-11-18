@@ -20,7 +20,9 @@ rồi mới chạy đánh giá. Khối 1 không sửa code.
 
 ### Câu 1.1 · Một mục tiêu cấp hệ thống (khác "model trả lời đúng")
 
-> …
+> *Bổ sung muộn ngày 18/11/2026, sau khi đã xử lý thẻ S5. Lúc ký tiêu chí (`abf47a7`, 15:05:40 GMT+7) ô này còn trống. Câu dưới đây diễn đạt lại mục tiêu mà các ngưỡng đã ký thể hiện; nó không được viết trước lần đo đầu tiên và không thay đổi tiêu chí đã ký.*
+>
+> Mỗi ticket giao trễ được xử lý xong với khoản hoàn đúng bằng phần quyền lợi còn lại theo DB và chính sách có hiệu lực tại ngày xử lý, không ghi lỗi oan cho hãng và không gửi dữ liệu cá nhân ra bên thứ ba; ca cần người được nhận trong 60 phút; và tổng chi phí mỗi ticket (tiền máy, công người, phí trực) đủ thấp hơn làm tay để ROI không dưới 0,25.
 
 ### Câu 1.2 · Mục tiêu nhìn từ hai người
 

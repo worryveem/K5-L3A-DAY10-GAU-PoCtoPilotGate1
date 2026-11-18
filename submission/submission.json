@@ -8,10 +8,10 @@
   ],
   "incident": "S5",
   "decision_v1": "Cải tiến thêm",
-  "decision_v2": "",
+  "decision_v2": "Thu hẹp",
   "three_lines": {
-    "environment_assumption": "",
-    "reduce_or_prevent": "",
-    "measure_in_pilot": ""
+    "environment_assumption": "Thiết kế dựa vào ledger đầy đủ và kịp thời, kho được phân loại đúng và giá công thủ công còn phù hợp; các giả định này có thể sai khi nhiều hệ thống ghi đồng thời hoặc cơ cấu đơn thay đổi.",
+    "reduce_or_prevent": "Cổng ngăn ghi vượt phần quyền lợi còn thiếu và ghi lại retry trong mô phỏng tuần tự khi DB đúng; scope và monitor chỉ giảm rủi ro kinh tế, chưa bảo đảm trước DB sai, ghi đồng thời hoặc người vận hành bỏ qua cảnh báo.",
+    "measure_in_pilot": "Trước Gate 2 cần đo lại chi phí máy, công duyệt và công thủ công ngoài pilot, độ phủ, tải giờ cao điểm, độ mới của ledger và đối soát hoàn một phần trên dữ liệu thật; không dùng ROI riêng của phần pilot thay cho ROI cả quy trình."
   }
 }

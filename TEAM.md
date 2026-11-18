@@ -13,11 +13,11 @@ Họ tên đầy đủ và MSSV của **mọi** thành viên; thêm dòng nếu 
 
 | STT | Họ và tên | MSSV | Vai | Trưởng nhóm |
 | --: | --------- | ---- | --- | :---------: |
-|   1 | Đỗ Minh Hoàng | 2A202603554 | Kỹ sư cổng (A) | Có |
-|   2 | Phạm Đức Hồng Đức | 2A202603558 | Kỹ sư cổng hoàn tiền (C) | Không |
-|   3 | Bùi Lê Công Tuấn | 2A202603610 | Vận hành và pháp lý (D) | Không |
-|   4 | Vũ Đức Tâm | 2A202603522 | Kỹ sư cổng (B) | Không |
-|   5 |           |      |     |             |
+|   1 | Đỗ Minh Hoàng | 2A202603554 | Kỹ sư cổng | Có |
+|   2 | Phạm Đức Hồng Đức | 2A202603558 | Sản phẩm và kinh doanh (kiêm code cổng hoàn tiền) | Không |
+|   3 | Bùi Lê Công Tuấn | 2A202603610 | Vận hành và pháp lý  | Không |
+|   4 | Vũ Đức Tâm | 2A202603522 | Kỹ sư cổng  | Không |
+
 
 Ghi `members` trong `submission/submission.json` theo dạng `"HoVaTen-MSSV"`, khớp bảng trên.
 
@@ -29,33 +29,38 @@ Mỗi thành viên tự viết một mục bên dưới (chép mẫu, đổi ti�
 
 ### Phần việc phụ trách
 
-Trưởng nhóm, Kỹ sư cổng A: khung chia hàm, `pre_guard`, điều phối `write_gate` trong `lab10/guards.py`, chạy baseline và kiểm regression, gộp nhánh vào main. Phiếu A: A2 câu 1.3 và A3 câu 1.5; Phiếu B: B0, B1, phân tích phòng ngừa B6 và B7.1. Phần tiêu chí A4/A5 được thực hiện theo yêu cầu bổ sung của trưởng nhóm. Checkpoint và vòng 2 chưa thực hiện.
+Trưởng nhóm, Kỹ sư cổng: khung chia hàm, `pre_guard`, điều phối `write_gate` trong `lab10/guards.py`; ký tiêu chí, chạy baseline và kiểm regression; gộp nhánh của cả nhóm, chốt cổng vòng 1 và quyết định v1; xử lý thẻ S5 ở vòng 2 và gom bài nộp. Phiếu A: A2 câu 1.3, A3 câu 1.5, A4, A5, câu 1.1 (bổ sung muộn sau S5). Phiếu B: B0, B1, B6, B7.1, B8, B3 (mở lại theo C3.5, bổ sung muộn). Phiếu C: C0–C12 cho S5.
 
 ### Đóng góp cụ thể
 
-- Tạo khung hàm để C phụ trách refund và D phụ trách hãng/reply.
-- Chốt và ký tiêu chí trước lần eval đầu tiên; ghi giờ ký, commit và kết quả push thực tế.
-- Đo baseline, ghi hai vi phạm an toàn thay vì kết luận đạt từ pass_rate trung bình.
-- Viết ba cổng A: chọn duy nhất chính sách theo ngày, kiểm khách–đơn/kiện, chặn model dùng chỉ dẫn từ nội dung khách làm quyền ghi.
-- Chạy 13 test công khai và 27 kiểm tra bổ sung, kiểm không có ca mới hỏng; gộp code A vào main.
-- Khôi phục byte gốc cho các file khóa bị Git Windows đổi xuống dòng và thêm `.gitattributes` để giữ hash khi checkout. Các hàm của C/D và monitor của B còn chờ hoàn thiện; chưa tuyên bố hoàn tất cổng vòng 1.
+- Tạo khung hàm để các thành viên viết riêng cổng hoàn tiền, cổng hãng/trả lời và monitor.
+- Ký tiêu chí lúc 15:05:40 GMT+7, trước lần eval đầu tiên lúc 15:15:53; đo baseline và ghi hai vi phạm an toàn thay vì kết luận đạt từ pass_rate trung bình.
+- Viết ba cổng: chọn duy nhất chính sách theo `ctx.as_of`, kiểm khách–đơn/kiện, chặn model dùng chỉ dẫn trong nội dung khách làm quyền ghi.
+- Thêm `.gitattributes` và khôi phục byte gốc cho các file khóa để giữ hash giữa Windows và hệ điều hành khác.
+- Tích hợp B/C/D, chốt checkpoint vòng 1 `57b93087` lúc 17:23:26 GMT+7 và quyết định v1 "Cải tiến thêm". Gói thẻ đã được merge lúc 17:17:11, trước checkpoint; lệch trình tự này được ghi nguyên ở B8 và C10, không sửa lịch sử.
+- S5: chạy grade trước khi sửa (FAIL), dò trace và phân tích nguyên nhân; sửa `_gate_refund` để chỉ hoàn phần quyền lợi còn thiếu, deny khi đã hoàn đủ, không ghi lại khi retry và kiểm `ctx.cost_vnd` trước ghi; thêm event `cost_context` trong `pre_guard` và ba monitor chi phí theo kho; thu hẹp pilot về bốn kho bán lẻ HN/HCM/DN/CT, B2B đi thủ công.
+- Chạy 13 test công khai và 10 kiểm tra S5 bổ sung (hoàn một phần, nhiều khoản trước, đã đủ/vượt, retry, hai đơn cùng khách, ledger/amount sai, hết budget, monitor thiếu telemetry); verify tiêu chí và checkpoint còn nguyên.
+- Điền Phiếu C, quyết định v2 "Thu hẹp", `submission/submission.json` và bổ sung muộn A1 câu 1.1, B3.
 
 ### Bằng chứng
 
-- Commit ký tiêu chí: `abf47a7`; bằng chứng baseline: `8e6a9bc`; cổng A: `081f725`; gộp vào main: `78c6a9f`; quy tắc bảo toàn byte: `698bfc3`.
-- Baseline: `runs/R-base-before-20261118-151553-0176af`.
-- Bản A cuối trên main: `runs/R-base-after-20261118-152115-2ef9f0`; không có ca mới hỏng, còn lỗi cũ `T-002@55` thuộc nhánh refund/hãng.
-- Phiếu A: A2, A3, A4, A5; Phiếu B: B0, B1, B6, B7.1. Mã chạy và số liệu đã điền theo report thực tế.
+- Commit ký tiêu chí `abf47a7`; baseline `8e6a9bc`; cổng A `081f725`, gộp `78c6a9f`; bảo toàn byte `698bfc3`; chốt vòng 1 và v1 `40b4bea`.
+- S5: grade trước sửa và phân tích `d16cbce`; sửa hoàn phần còn thiếu và monitor `7d56912`; thu hẹp phạm vi `4493931`; merge vào main `d6e772f`.
+- Baseline `R-base-before-20261118-151553-0176af`; prepared bộ nền `R-base-prepared-20261118-172326-609dda`.
+- Grade trước sửa `R-S5-grade-20261118-172550-609dda` = FAIL: pass_rate 0,9667, 8.188đ/ticket, ROI 0,22; S5-21 bị chặn cả 12.000đ còn thiếu; HCM-B2B 10.382đ/ticket.
+- Grade sau sửa `R-S5-grade-20261118-173643-b4f9ee` = PASS-VISIBLE, chưa chạy test ẩn: S5 trong pilot 90/90 đạt, 3.980đ/ticket, ROI 1,51 (chỉ phần pilot, độ phủ 60%); bộ nền 110/110, không có ca mới hỏng.
+- Phiếu A: A1 câu 1.1, A2, A3, A4, A5; Phiếu B: B0, B1, B3, B6, B7.1, B8; Phiếu C: C0–C12.
 
 ### Exit ticket
 
-Một điều học được, một điều còn chưa chắc.
+- Điều mình học được: Lúc đầu mình nghĩ pass_rate cao và hoàn sai bằng 0 là gần xong rồi, nhưng S5 cho thấy chưa đủ. Phải tách chi phí theo từng kho mới thấy HCM-B2B tốn hơn 10.000đ/ticket, đắt hơn làm tay, và phải cộng số tiền đã hoàn trong sổ cái mới thấy khách S5-21 còn thiếu 12.000đ. Giờ mình đọc report theo kho và theo từng dòng tiền, không chỉ nhìn một con số trung bình.
+- Điều mình còn chưa chắc: Cổng hoàn phần còn thiếu chỉ đúng khi các lệnh ghi chạy lần lượt như trong mô phỏng. Nếu CSKH và trợ lý cùng ghi một lúc, hai bên có thể cùng đọc số dư cũ rồi hoàn vượt. Mình chưa biết backend thật có khóa giao dịch hay idempotency nguyên tử không, và nhóm cũng chưa có bài test ghi đồng thời nào.
 
 ## PhamDucHongDuc-2A202603558
 
 ### Phần việc phụ trách
 
-Kỹ sư cổng hoàn tiền (C): hàm `_gate_refund` trong `lab10/guards.py`; kiểm tra quyền lợi, phê duyệt, hoàn trùng và các trần tự động. Ghi bằng chứng ở Phiếu B mục B0/B7.1;
+Sản phẩm và kinh doanh, kiêm viết cổng hoàn tiền: hàm `_gate_refund` trong `lab10/guards.py`; kiểm tra quyền lợi, phê duyệt, hoàn trùng và các trần tự động. Ghi bằng chứng ở Phiếu B mục B0/B7.1;
 
 ### Đóng góp cụ thể
 
@@ -99,3 +104,26 @@ Vận hành và pháp lý (D): nhánh `_gate_carrier` (`file_carrier_fault`, `no
 
 - Điều học được: cổng chặn ở tầng hệ thống (`write_gate`, `operating_gates.json`) giúp ngăn lỗi oan cho bên thứ ba và rò rỉ PII mà không phụ thuộc vào prompt.
 - Điều còn chưa chắc: hành vi hàng chờ và chi phí khi có sự cố đột biến ở Vòng 2 (cần kiểm chứng thêm sau khi kéo thẻ và chạy `grade`).
+
+## VuDucTam-2A202603522
+
+*Mục này do trưởng nhóm tổng hợp từ commit `6074755`; Tâm cần tự rà lại và tự viết exit ticket.*
+
+### Phần việc phụ trách
+
+Kỹ sư cổng, phụ trách monitor và kiểm thử: `lab10/monitors.py`; Phiếu B mục B0 (dòng 5), B2, B7.2, B7.3.
+
+### Đóng góp cụ thể
+
+- Thêm ba monitor production vào `MONITORS`, không dùng nhãn đúng/sai: `model_override_rate`, `peak_review_arrivals_per_hour`, `carrier_fault_delay_mismatch_rate`.
+- Điền bảng soát lỗi B2 cho `T-002@55`: hai lỗi chìm (hoàn oan 20.000đ, ghi lỗi oan cho VNX), nguồn lỗi và hướng xử lý gắn với hai monitor mới.
+- Viết B7.2 (hai bước tránh rò rỉ dữ liệu giữa bộ nền, ticket tự viết và gói thẻ) và B7.3 (behavioral test: cùng đơn `O-1001`, chỉ khách `C-01` khớp chủ đơn mới được xử lý; `C-02` bị chuyển người trước mọi lệnh ghi).
+
+### Bằng chứng
+
+- Commit `6074755` ("monitor và test"), merge vào main qua PR #1 `b0e7fba`.
+- Lần chạy `R-base-after-20261118-154805-372946` (B0 dòng 5): 13 test công khai đạt; `model_override_rate = 0,045455` (5/110), `carrier_fault_delay_mismatch_rate = 0,017857` (1/56), `peak_review_arrivals_per_hour = 1`.
+
+### Exit ticket
+
+Một điều học được, một điều còn chưa chắc.

@@ -125,26 +125,28 @@ gì, định dạng ra sao, và **thế giới thật làm dữ liệu đó lệ
 Trợ lý LogiX không huấn luyện gì trong lab này, nên ta hỏi về "dữ liệu trợ lý đọc lúc chạy / trường then chốt / nguồn sự thật".
 Gợi ý: mở `data/world.json` phần `policies`, `orders[].parcels`, `ops_limits`, `ops_facts`.
 
+> *Mở lại theo Phiếu C mục C3.5 (thẻ S5), bổ sung muộn ngày 18/11/2026 sau khi xử lý S5. Lúc chốt vòng 1 bảng này còn trống; nội dung dưới đây lấy từ `data/world.json`, `incidents/S5/world_patch.json` và code hiện có, không phải phân tích đã có trước khi đo. Những dòng đổi so với vòng 1 ghi ở C3.5.*
+
 | Mục | Điền cho trợ lý hoàn tiền |
 |---|---|
-| Người dùng | |
-| Việc người dùng cần làm xong | |
-| Đầu ra của hệ thống (kể cả các lệnh ghi) | |
-| Dữ liệu trợ lý đọc lúc chạy (bảng nào trong `data/world.json`) | |
-| Trường then chốt quyết định tiền và lỗi hãng | |
-| Với mỗi trường then chốt: **nguồn sự thật** hay **bản sao** (ai cập nhật, khi nào)? | |
-| Định dạng cần để ý (ngày, trường được phép trống, đơn nhiều kiện) | |
-| Thế giới thật làm dữ liệu lệch ở đâu (theo mùa, đổi chính sách, giờ cao điểm, người nhập tay)? | |
-| Câu người ngoài sẽ hỏi về nguồn dữ liệu ("sao hệ thống biết đơn trễ mấy ngày?") | |
+| Người dùng | Khách báo đơn giao trễ qua kênh CSKH; nhân viên CSKH, trong đó trưởng ca `NV-HANH` nhận và duyệt các ca được chuyển sang. Bên chịu ảnh hưởng nhưng không dùng trợ lý: kế toán đối soát `NV-OANH`, hãng vận chuyển, shop. |
+| Việc người dùng cần làm xong | Khách biết đơn có được hoàn hay không, được bao nhiêu và vì sao; CSKH đóng ticket mà không phải tự tính lại; nếu trễ do hãng thì ghi lỗi đúng hãng, đúng kiện. |
+| Đầu ra của hệ thống (kể cả các lệnh ghi) | `issue_refund`, `file_carrier_fault`, `notify_carrier`, `send_reply`; hoặc chuyển người duyệt kèm ghi chú giải thích (`decision_note`). |
+| Dữ liệu trợ lý đọc lúc chạy (bảng nào trong `data/world.json`) | `orders` (gồm `parcels`, `recipient`, `warehouse_id`, `refund_status`), `customers`, `policies`, `approvals`, `carriers`, sổ cái (khởi tạo từ `ledger_seed`), `ops_limits`, `ops_facts`. Nội dung ticket do khách gửi cũng được đọc nhưng không phải dữ liệu đáng tin. |
+| Trường then chốt quyết định tiền và lỗi hãng | `parcels[].promised_date`, `delivered_date`, `status`, `delay_cause`, `carrier_id`, `parcel_id`; `shipping_fee_vnd`, `goods_value_vnd`; `policies[].effective_from`, `effective_to`, `late.*`, `auto_limit_vnd`, `fault_causes`; `approvals[].max_vnd`, `expires_at`, `status`; dòng sổ cái `order_id`, `ticket_id`, `amount_vnd`; trần trong `ops_limits`. |
+| Với mỗi trường then chốt: **nguồn sự thật** hay **bản sao** (ai cập nhật, khi nào)? | Tracking `parcels[]` là nguồn sự thật về ngày hứa, ngày giao và nguyên nhân trễ; số ngày khách tự khai trong ticket không phải. `policies[].effective_from/effective_to` so với `as_of` quyết định phiên bản có hiệu lực; cổng không dựa vào cờ `index_active`. Bản ghi `approvals` là nguồn duy nhất cho quyền vượt hạn mức; mã duyệt viết trong ticket không có giá trị. Sổ cái là nguồn sự thật về số đã hoàn, gồm cả dòng CSKH hoàn tay (`basis: manual` trong gói S5). `orders.refund_status` chỉ là bản sao, được batch đối soát đêm làm mới (chú thích trong `lab10/agent.py`), nên không thấy khoản ghi trong ngày. Dữ liệu mock không ghi người cập nhật từng bảng. |
+| Định dạng cần để ý (ngày, trường được phép trống, đơn nhiều kiện) | Ngày dạng `YYYY-MM-DD`, tính theo `as_of`. Bộ nền có 2 kiện `IN_TRANSIT` với `delivered_date` trống, 5 kiện `delay_cause` trống, chính sách v4 có `effective_to` trống. Một đơn có 2 kiện, nên phải chọn đúng `parcel_id`. Tiền là số nguyên VND; một đơn có thể có nhiều dòng sổ cái, tức là đã hoàn một phần. |
+| Thế giới thật làm dữ liệu lệch ở đâu (theo mùa, đổi chính sách, giờ cao điểm, người nhập tay)? | Chính sách đổi phiên bản (v4 có hiệu lực từ 2026-12-01); CSKH hoàn tay song song với trợ lý trong khi cờ `refund_status` chỉ cập nhật ban đêm; điểm phát quét sót hoặc nhập bù ngày giao; mùa sale làm tăng lưu lượng và độ dài ticket; tỉ lệ đơn sỉ theo kho thay đổi, kéo theo số ca cần người duyệt. |
+| Câu người ngoài sẽ hỏi về nguồn dữ liệu ("sao hệ thống biết đơn trễ mấy ngày?") | "Sao hệ thống biết đơn trễ mấy ngày và đã hoàn bao nhiêu rồi?" Trả lời: số ngày trễ tính từ `promised_date`/`delivered_date` của đúng kiện trong tracking so với `as_of`, không lấy số khách khai; số đã hoàn là tổng các dòng sổ cái của đơn, không lấy từ cờ `refund_status`. |
 
 **Tóm lại (điền vào chỗ trống):**
-Trợ lý dùng `__________`, `__________`, `__________` để giúp `__________` làm được `__________`.
-Trường mà nếu sai thì tiền hoặc lỗi hãng sai theo: `__________`, `__________`.
-Chúng tôi biết thế giới thật sẽ làm dữ liệu lệch ở: `__________`. Dấu hiệu nhìn thấy sớm nhất: `__________`.
+Trợ lý dùng `tracking của từng kiện`, `chính sách có hiệu lực theo ngày`, `sổ cái hoàn tiền` để giúp `nhân viên CSKH` làm được `việc trả lời và hoàn đúng quyền lợi cho khách bị giao trễ`.
+Trường mà nếu sai thì tiền hoặc lỗi hãng sai theo: `parcels[].delivered_date` / `delay_cause`, `amount_vnd` trong sổ cái.
+Chúng tôi biết thế giới thật sẽ làm dữ liệu lệch ở: `đổi phiên bản chính sách và hoàn tay song song chưa kịp phản ánh vào cờ đối soát`. Dấu hiệu nhìn thấy sớm nhất: `sự kiện chặn ghi trùng hoặc tổng sổ cái của đơn khác với quyền lợi tính từ DB; số ca chuyển người tăng sau ngày đổi chính sách`.
 
-**Ví dụ drift trong 3 tháng tới** (lấy từ dòng "thế giới thật làm dữ liệu lệch"): cái gì đổi `____` · đổi ngày nào `____` ·
-trường nào cho thấy `____` · con số nào của Bản tiêu chí bị ảnh hưởng `____`.
-Đây là đầu vào đổi hay quan hệ vào–ra đổi? Chỉ số nào sẽ phát hiện? `__________`
+**Ví dụ drift trong 3 tháng tới** (lấy từ dòng "thế giới thật làm dữ liệu lệch"): cái gì đổi `REFUND-v3 sang REFUND-v4: hoàn từ 2 ngày trễ thay vì 3, hạn mức tự động 200.000đ xuống 100.000đ, FORCE_MAJEURE vẫn hoàn phí nhưng không còn ghi lỗi hãng` · đổi ngày nào `2026-12-01` ·
+trường nào cho thấy `policies[].effective_from`, `late.min_days_fee`, `auto_limit_vnd`, `fault_causes` · con số nào của Bản tiêu chí bị ảnh hưởng `wrongful_refund_vnd_max`, `wrongful_carrier_faults_max`, mục tiêu nên có `escalation_rate_max`, và chi phí/ROI qua số ca chuyển người.
+Đây là đầu vào đổi hay quan hệ vào–ra đổi? Chỉ số nào sẽ phát hiện? `Quan hệ vào–ra đổi: cùng một đơn trễ nhưng quyền lợi và việc ghi lỗi hãng khác đi. Cổng chọn chính sách theo as_of xử lý phần ghi; escalation_rate và hai monitor chi phí theo kho sẽ cho thấy tải duyệt và chi phí tăng khi hạn mức tự động giảm. Chưa có monitor riêng cho việc đổi phiên bản chính sách; cần chạy lại bộ thử với as_of sau 2026-12-01.`
 
 **Ví dụ một dòng (đừng chép):** trường then chốt `parcels[].delivered_date` · bản ghi do máy quét ở điểm phát tạo ra, là nguồn
 sự thật về ngày giao · lệch khi điểm phát quét sót hoặc nhập bù bằng tay.
