@@ -32,7 +32,7 @@ Mọi con số trong quyết định Gate 1 phải trỏ về một dòng ở đ
 | 1 | `R-base-before-20261118-151553-0176af` | base · base | baseline, chưa có cổng | 0,9909 [0,9727; 1,0] | 0,9545 | 20.000đ · 1 · 0 | 0,2273 | Chưa đạt hai ngưỡng an toàn; chưa đủ căn cứ Tiếp tục. |
 | 2 | `R-base-after-20261118-151859-d0c9b2` | base · after | A: kiểm khách–đơn, ghim chính sách theo ngày, chặn chỉ dẫn không đáng tin trước ghi; chưa gộp nhánh C/D | 0,9909 [0,9727; 1,0] | 0,9545 | 20.000đ · 1 · 0 | 0,2273 | Không có ca mới hỏng; lỗi cũ T-002@55 còn chờ nhánh refund/hãng. |
 | 3 | | base · prepared | (cổng vòng 1 đã chốt) | | | | | |
-| 4 | | | | | | | | |
+| 4 | `R-base-after-20261118-152115-2ef9f0` | base · after | Xác nhận bản A đã gộp main, hash nguồn cuối cùng; chưa có code C/D | 0,9909 [0,9727; 1,0] | 0,9545 | 20.000đ · 1 · 0 | 0,2273 | Không có ca mới hỏng; độ phủ 100%, còn T-002@55. Chưa phải prepared. |
 
 ---
 
@@ -279,11 +279,13 @@ python3 -m unittest discover -s tests
 
 | # | Cổng (hàm và nhánh, ví dụ `write_gate` khi `tool == "issue_refund"`) | Ứng với dòng nào ở B6 / B4 | Chặn điều gì, dựa vào nguồn sự thật nào | Mã lần chạy `base · after` | Ca đang đúng nào bị hỏng? (phải là "không") |
 |---|---|---|---|---|---|
-| 1 | G1: `pre_guard`, chọn duy nhất chính sách theo `ctx.as_of`, trả `allow(policy_id=...)` | B6: chính sách cũ sau ngày đổi phiên bản | Dùng khoảng hiệu lực trong bảng policies, không tin cờ active; ngày sai, thiếu hoặc chồng lấn phiên bản thì chuyển người. | `R-base-after-20261118-151859-d0c9b2` | không |
-| 2 | G2: `pre_guard`, kiểm `customer_id`, `order_id` và kiện được chỉ định | B6: khách/kiện không khớp đơn | So định danh có cấu trúc với `lookup_order` và danh sách kiện trong DB trước khi đọc nội dung; câu hỏi chung không có mã đơn vẫn được tiếp tục. | `R-base-after-20261118-151859-d0c9b2` | không |
-| 3 | G3: `_gate_untrusted_instructions`, được `write_gate` gọi trước cả bốn nhánh ghi | B6: ticket/checkout_note bị dùng để cấp quyền | Đọc trạng thái trích xuất/nhận chỉ dẫn trong trace; nếu model nhận chỉ dẫn từ nguồn khách thì chuyển người trước ghi. Không tra mã ticket hay so khớp câu chữ trong guard. | `R-base-after-20261118-151859-d0c9b2` | không |
+| 1 | G1: `pre_guard`, chọn duy nhất chính sách theo `ctx.as_of`, trả `allow(policy_id=...)` | B6: chính sách cũ sau ngày đổi phiên bản | Dùng khoảng hiệu lực trong bảng policies, không tin cờ active; ngày sai, thiếu hoặc chồng lấn phiên bản thì chuyển người. | `R-base-after-20261118-152115-2ef9f0` | không |
+| 2 | G2: `pre_guard`, kiểm `customer_id`, `order_id` và kiện được chỉ định | B6: khách/kiện không khớp đơn | So định danh có cấu trúc với `lookup_order` và danh sách kiện trong DB trước khi đọc nội dung; câu hỏi chung không có mã đơn vẫn được tiếp tục. | `R-base-after-20261118-152115-2ef9f0` | không |
+| 3 | G3: `_gate_untrusted_instructions`, được `write_gate` gọi trước cả bốn nhánh ghi | B6: ticket/checkout_note bị dùng để cấp quyền | Đọc trạng thái trích xuất/nhận chỉ dẫn trong trace; nếu model nhận chỉ dẫn từ nguồn khách thì chuyển người trước ghi. Không tra mã ticket hay so khớp câu chữ trong guard. | `R-base-after-20261118-152115-2ef9f0` | không |
 
 Kiểm tra thực tế: 13 test công khai đạt; 27 kiểm tra bổ sung đạt cho chính sách hiện tại/tương lai/chồng lấn/thiếu/ngày sai, khách–đơn/kiện, bốn thao tác ghi và chỉ dẫn từ ticket/checkout_note. Lệnh `lab10.gate --baseline` xác nhận không có ca mới hỏng. G3 chỉ chặn chỉ dẫn mà luồng model đã nhận diện trong trace; cần nhánh C/D kiểm thêm bất biến tiền, phê duyệt, lỗi hãng và payload để phòng các cách tấn công chưa được nhận diện. Chưa chốt `prepared`.
+
+Đối chiếu phép đo A2 trên trace của bản A cuối: 80 lần tới bước chọn chính sách, 0 lần sai phiên bản, 80 lần có `pinned=true`; 30 lần dừng hoặc trả lời trước bước chọn chính sách được đếm riêng. Hash report khớp code/config hiện tại. Đã kiểm 19 file khóa có sẵn khớp MANIFEST sau khi khôi phục byte LF gốc do Git Windows tự đổi xuống dòng; `.gitattributes` giữ LF cho file khóa, giữ CRLF đúng bản tiêu chí đã ký và giữ nguyên byte của snapshot/artifact. Mô phỏng checkout với `core.autocrlf=false` và `true` đều giữ đúng hash; không sửa tiêu chí, lock hay lịch sử ký.
 
 Hai trace kiểm riêng phần A (không thay phần behavioral test do B phụ trách ở B7.3):
 
