@@ -1,0 +1,29 @@
+COMMAND: python submission/runs/evidence/role_c_checks.py
+
+test_amount_and_payer (__main__.RefundChecks.test_amount_and_payer) ... ok
+test_approval_fields (__main__.RefundChecks.test_approval_fields) ... ok
+test_approval_reuse (__main__.RefundChecks.test_approval_reuse) ... ok
+test_approved_refund_exempt_from_auto_caps (__main__.RefundChecks.test_approved_refund_exempt_from_auto_caps) ... ok
+test_bad_tracking (__main__.RefundChecks.test_bad_tracking) ... ok
+test_claimed_delay_cannot_authorize_refund (__main__.RefundChecks.test_claimed_delay_cannot_authorize_refund) ... ok
+test_configured_approver (__main__.RefundChecks.test_configured_approver) ... ok
+test_customer_cap_boundary (__main__.RefundChecks.test_customer_cap_boundary) ... ok
+test_daily_caps (__main__.RefundChecks.test_daily_caps) ... ok
+test_identity (__main__.RefundChecks.test_identity) ... ok
+test_missing_or_unknown_approval (__main__.RefundChecks.test_missing_or_unknown_approval) ... ok
+test_other_tools_not_intercepted (__main__.RefundChecks.test_other_tools_not_intercepted) ... ok
+test_partial_approval_covers_remaining_not_original_total (__main__.RefundChecks.test_partial_approval_covers_remaining_not_original_total) ... ok
+test_partial_auto_limit_applies_to_remaining (__main__.RefundChecks.test_partial_auto_limit_applies_to_remaining) ... ok
+test_partial_customer_cap_uses_actual_new_amount (__main__.RefundChecks.test_partial_customer_cap_uses_actual_new_amount) ... ok
+test_partial_daily_caps_use_actual_new_amount (__main__.RefundChecks.test_partial_daily_caps_use_actual_new_amount) ... ok
+test_partial_llm_budget_boundary (__main__.RefundChecks.test_partial_llm_budget_boundary) ... ok
+test_partial_remaining_proposal_is_accepted (__main__.RefundChecks.test_partial_remaining_proposal_is_accepted) ... ok
+test_partial_total_is_corrected_to_remaining (__main__.RefundChecks.test_partial_total_is_corrected_to_remaining) ... ok
+test_prior_refund_and_retry (__main__.RefundChecks.test_prior_refund_and_retry) ... ok
+test_retry_end_to_end (__main__.RefundChecks.test_retry_end_to_end) ... ok
+test_valid_refunds (__main__.RefundChecks.test_valid_refunds) ... ok
+
+----------------------------------------------------------------------
+Ran 22 tests in 0.126s
+
+OK

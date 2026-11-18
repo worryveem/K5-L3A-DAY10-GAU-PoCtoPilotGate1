@@ -1,0 +1,23 @@
+COMMAND: python -m unittest discover -s tests -v
+
+test_baseline_known_numbers (test_public.TestBase.test_baseline_known_numbers)
+Bản TRƯỚC: 22 ticket x 5 seed = 110 lần chạy, hỏng đúng một ca T-002@55 (agent tin số ngày khách ghi). ... ok
+test_denied_refund_is_not_announced_as_paid (test_public.TestBase.test_denied_refund_is_not_announced_as_paid)
+Cổng chặn lệnh hoàn tiền thì khách KHÔNG được báo là đã hoàn: sổ cái trống, tin nhắn nói yêu cầu bị từ chối. ... ok
+test_deterministic (test_public.TestBase.test_deterministic) ... ok
+test_helpers (test_public.TestBase.test_helpers) ... ok
+test_kill_switch_stops_all_refunds (test_public.TestBase.test_kill_switch_stops_all_refunds) ... ok
+test_team_guards_do_not_break_base (test_public.TestBase.test_team_guards_do_not_break_base)
+Bản SAU: ca nào trước đạt thì sau vẫn đạt. ... ok
+test_verdict_api (test_public.TestBase.test_verdict_api) ... ok
+test_cost_budget_stops_before_calling_the_llm (test_public.TestOperatingGates.test_cost_budget_stops_before_calling_the_llm) ... ok
+test_daily_refund_cap_sends_auto_refunds_to_a_human (test_public.TestOperatingGates.test_daily_refund_cap_sends_auto_refunds_to_a_human) ... ok
+test_default_gates_change_nothing (test_public.TestOperatingGates.test_default_gates_change_nothing) ... ok
+test_ops_summary_has_business_numbers (test_public.TestOperatingGates.test_ops_summary_has_business_numbers) ... ok
+test_pilot_scope_by_warehouse (test_public.TestOperatingGates.test_pilot_scope_by_warehouse) ... ok
+test_review_queue_backs_up_when_understaffed (test_public.TestOperatingGates.test_review_queue_backs_up_when_understaffed) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 1.728s
+
+OK

@@ -1,0 +1,17 @@
+COMMAND: python -m unittest submission.runs.evidence.s5_validation -v
+
+test_absent_telemetry_is_not_reported_as_zero_cost (submission.runs.evidence.s5_validation.CostTelemetry.test_absent_telemetry_is_not_reported_as_zero_cost) ... ok
+test_machine_and_human_costs_are_both_counted (submission.runs.evidence.s5_validation.CostTelemetry.test_machine_and_human_costs_are_both_counted) ... ok
+test_recheck_note_changes_human_work_units (submission.runs.evidence.s5_validation.CostTelemetry.test_recheck_note_changes_human_work_units) ... ok
+test_distinct_orders_for_same_customer_remain_served (submission.runs.evidence.s5_validation.RefundSafety.test_distinct_orders_for_same_customer_remain_served) ... ok
+test_invalid_ledger_does_not_produce_a_write (submission.runs.evidence.s5_validation.RefundSafety.test_invalid_ledger_does_not_produce_a_write) ... ok
+test_multiple_partial_payments_are_combined (submission.runs.evidence.s5_validation.RefundSafety.test_multiple_partial_payments_are_combined) ... ok
+test_reconcile_zero_partial_full_and_overpaid (submission.runs.evidence.s5_validation.RefundSafety.test_reconcile_zero_partial_full_and_overpaid) ... ok
+test_repeated_contact_does_not_refund_twice (submission.runs.evidence.s5_validation.RefundSafety.test_repeated_contact_does_not_refund_twice) ... ok
+test_retry_after_corrected_partial_refund_is_idempotent (submission.runs.evidence.s5_validation.RefundSafety.test_retry_after_corrected_partial_refund_is_idempotent) ... ok
+test_untrusted_amount_and_exhausted_budget_do_not_write (submission.runs.evidence.s5_validation.RefundSafety.test_untrusted_amount_and_exhausted_budget_do_not_write) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.057s
+
+OK
