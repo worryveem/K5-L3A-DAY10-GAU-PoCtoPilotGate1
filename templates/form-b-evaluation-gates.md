@@ -34,6 +34,8 @@ Mọi con số trong quyết định Gate 1 phải trỏ về một dòng ở đ
 | 3 | | base · prepared | (cổng vòng 1 đã chốt) | | | | | |
 | 4 | `R-base-after-20261118-152115-2ef9f0` | base · after | Xác nhận bản A đã gộp main, hash nguồn cuối cùng; chưa có code C/D | 0,9909 [0,9727; 1,0] | 0,9545 | 20.000đ · 1 · 0 | 0,2273 | Không có ca mới hỏng; độ phủ 100%, còn T-002@55. Chưa phải prepared. |
 | 5 | `R-base-after-20261118-154805-372946` | base · after | B: thêm ba monitor production; không đổi cổng hoặc config | 0,9909 [0,9727; 1,0] | 0,9545 | 20.000đ · 1 · 0 | 0,2273 | 13 test công khai đạt; chỉ còn lỗi cũ T-002@55, monitor đã cho giá trị trên 110 lần chạy. |
+| 6 | `R-base-after-20261118-155133-d2681c` | base · after | C: hoàn thiện `_gate_refund` (quyền lợi DB, phê duyệt, chống ghi trùng, trần tự động); giữ nguyên A và nhánh D | 1,0 [1,0; 1,0] | 1,0 | 0đ · 0 · 0 | 0,2364 | Đạt 110/110, không có ca mới hỏng. Chi phí 4.278đ/ticket, ROI 1,34, 0 ca ùn, độ phủ 100%. Chưa phải prepared; mục tiêu nên có chuyển người ≤20% chưa đạt. |
+| 7 | `R-base-after-20261118-162922-3b333c` | base · after | `hongduc`: tích hợp monitor B từ `origin/main` (`b0e7fba`) với cổng hoàn tiền C | 1,0 [1,0; 1,0] | 1,0 | 0đ · 0 · 0 | 0,2364 | 13 test công khai và 15 test C đạt; ba monitor mới chạy không lỗi. Không cần đổi code C sau merge. Chưa chốt prepared. |
 
 ---
 
@@ -289,6 +291,22 @@ python3 -m unittest discover -s tests
 Kiểm tra thực tế: 13 test công khai đạt; 27 kiểm tra bổ sung đạt cho chính sách hiện tại/tương lai/chồng lấn/thiếu/ngày sai, khách–đơn/kiện, bốn thao tác ghi và chỉ dẫn từ ticket/checkout_note. Lệnh `lab10.gate --baseline` xác nhận không có ca mới hỏng. G3 chỉ chặn chỉ dẫn mà luồng model đã nhận diện trong trace; cần nhánh C/D kiểm thêm bất biến tiền, phê duyệt, lỗi hãng và payload để phòng các cách tấn công chưa được nhận diện. Chưa chốt `prepared`.
 
 Đối chiếu phép đo A2 trên trace của bản A cuối: 80 lần tới bước chọn chính sách, 0 lần sai phiên bản, 80 lần có `pinned=true`; 30 lần dừng hoặc trả lời trước bước chọn chính sách được đếm riêng. Hash report khớp code/config hiện tại. Đã kiểm 19 file khóa có sẵn khớp MANIFEST sau khi khôi phục byte LF gốc do Git Windows tự đổi xuống dòng; `.gitattributes` giữ LF cho file khóa, giữ CRLF đúng bản tiêu chí đã ký và giữ nguyên byte của snapshot/artifact. Mô phỏng checkout với `core.autocrlf=false` và `true` đều giữ đúng hash; không sửa tiêu chí, lock hay lịch sử ký.
+
+**Bổ sung vai C — cổng hoàn tiền, sau bản A:**
+
+| Cổng trong `_gate_refund` | Rủi ro / cơ sở | Hành vi và bằng chứng |
+|---|---|---|
+| C1: xác minh quyền lợi trước `issue_refund` | B6: độ trễ khách khai đè DB; tiền hoặc người trả sai | Tính lại theo kiện của ticket, tracking và chính sách có hiệu lực. Số tiền không khớp hoặc payer không phải LOGIX thì chuyển người trước mọi lệnh ghi. `T-002@55`: DB 2 ngày, quyền lợi 0đ, đề xuất 20.000đ → `refund_entitlement_blocked`; sổ cái, lỗi hãng, gửi hãng đều rỗng. |
+| C2: chống hoàn trùng và kiểm quyền phê duyệt | Sổ cái là nguồn đã ghi tiền; cờ đối soát có thể cũ; agent retry khi xác nhận lỗi | Nếu đơn đã có hoàn thì chuyển người. Riêng retry cùng ticket, cùng tiền/payer/phê duyệt thì `deny` lần ghi lặp để luồng đầu tiên tiếp tục trả lời đúng. Phê duyệt phải khớp ticket/đơn/khách, còn hạn, trạng thái valid, đủ hạn mức, có người đứng tên và chưa dùng; kiểm người đứng tên theo config khi đã đặt. |
+| C3: trần tự động cho khách và cho ngày | `ops_limits.max_auto_refund_per_customer_per_day_vnd` = 300.000đ; ngân sách Finance = 2.000.000đ/ngày | Chặn trước ghi khi vượt trần khách; trần ngày lấy mức thấp hơn giữa Finance và config nếu có. Khoản dùng phê duyệt hợp lệ được loại khỏi tổng tự động. Không tự thay số config hay tiêu chí đã ký. |
+
+Bằng chứng cuối C: `R-base-after-20261118-155133-d2681c`, 110/110 lần chạy đạt, pass_rate và pass_k đều 1,0, không có ca mới hỏng so với baseline đã ghi ở B0. Đạt cả 5 ngưỡng bắt buộc và 3 ngưỡng kinh doanh/vận hành đã ký. Mục tiêu nên có về chuyển người chưa đạt (23,64% >20%); hàng chờ lâu nhất 0 phút, 0 ca ùn, chi phí 4.278đ/ticket <8.000đ và ROI 1,34 >0,25. Chưa kết luận pilot vì nhánh D, monitor, config vận hành, checkpoint và thẻ sự cố vẫn cần hoàn thiện.
+
+Kiểm tra C: 13 test công khai và 15 test bổ sung đều đạt. Script kiểm bổ sung nằm ở `runs/role_c_checks.py` (artifact cục bộ, bị Git bỏ qua); chạy `py -3.11 -X utf8 runs/role_c_checks.py`. Các test kiểm biên trần, số tiền/payer, định danh, phê duyệt sai/hết hạn/thu hồi/tái dùng, hoàn trùng và retry sau lỗi confirm. Test retry tích hợp chứng minh chỉ một dòng hoàn 25.000đ và tin trả lời khớp sổ cái. Tiêu chí ký vẫn khớp hash `e781e465`; đã khôi phục đúng byte manifest cho 19 file khóa có sẵn bị CRLF khi checkout, không thay logic.
+
+Giới hạn của C: chặn trước ghi dựa trên DB hiện có; chưa bảo vệ giao dịch đồng thời ngoài mô phỏng. API sổ cái không có ngày cho từng dòng, nên trần khách tính bảo thủ cả các dòng sẵn có trong snapshot (có thể chuyển người nhiều hơn thực tế). Cần timestamp và idempotency/transaction ở backend khi pilot thật. Người có thẩm quyền duyệt được kiểm theo `operations.approver_id` khi config này đã được điền; hiện vẫn trống. Nhánh hãng và reply vẫn thuộc D; C không thay thế kiểm soát riêng cho các thao tác đó.
+
+Sau merge `origin/main` vào `hongduc`: báo cáo tích hợp `R-base-after-20261118-162922-3b333c` giữ nguyên chất lượng/chi phí trên; monitor B cho `model_override_rate=0,045455`, `peak_review_arrivals_per_hour=1`, `carrier_fault_delay_mismatch_rate=0`. Monitor B đã có trong bản tích hợp; chưa có thẻ sự cố để xác nhận monitor sáng đèn trên gói sự cố. Phần C còn cần người phụ trách ghi họ tên/MSSV vào TEAM và kiểm lại sau khi nhóm gộp D/config vận hành; chưa có thay đổi code C cần làm vì merge này.
 
 Hai trace kiểm riêng phần A (không thay phần behavioral test do B phụ trách ở B7.3):
 

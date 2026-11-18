@@ -14,7 +14,7 @@ Họ tên đầy đủ và MSSV của **mọi** thành viên; thêm dòng nếu 
 | STT | Họ và tên | MSSV | Vai | Trưởng nhóm |
 | --: | --------- | ---- | --- | :---------: |
 |   1 | Đỗ Minh Hoàng | 2A202603554 | Kỹ sư cổng (A) | Có |
-|   2 |           |      |     |             |
+|   2 | Phạm Đức Hồng Đức | 2A202603558 | Kỹ sư cổng hoàn tiền (C) | Không |
 |   3 |           |      |     |             |
 |   4 |           |      |     |             |
 |   5 |           |      |     |             |
@@ -50,3 +50,28 @@ Trưởng nhóm, Kỹ sư cổng A: khung chia hàm, `pre_guard`, điều phối
 ### Exit ticket
 
 Một điều học được, một điều còn chưa chắc.
+
+## PhamDucHongDuc-2A202603558
+
+### Phần việc phụ trách
+
+Kỹ sư cổng hoàn tiền (C): hàm `_gate_refund` trong `lab10/guards.py`; kiểm tra quyền lợi, phê duyệt, hoàn trùng và các trần tự động. Ghi bằng chứng ở Phiếu B mục B0/B7.1;
+
+### Đóng góp cụ thể
+
+- Hoàn thiện `_gate_refund`: đối chiếu quyền lợi với DB và chính sách theo ngày; kiểm tiền/payer, định danh, phê duyệt; chống hoàn trùng và retry; kiểm trần tự động của khách và ngân sách ngày.
+- Giữ nguyên phần điều phối/pre-guard của A và các hàm hãng/reply của D; không đổi tiêu chí đã ký, không chốt vòng 1 thay cả nhóm.
+- Kiểm tra phần C bằng 13 test công khai và 15 test bổ sung, sau đó đánh giá bộ nền trước và sau khi tích hợp monitor B. Giải quyết xung đột nhật ký Phiếu B bằng cách giữ cả bằng chứng B và C.
+-  Triển khai cổng hoàn tiền, viết/chạy kiểm tra và soạn bằng chứng trong TEAM/Phiếu B. Thành viên phụ trách cần giải thích được logic và các kết quả khi demo.
+
+### Bằng chứng
+
+- Commit phần C: `b74280d`; merge `origin/main` vào `hongduc`: `cf306e0` (main tại `b0e7fba`).
+- Báo cáo trước merge: `runs/R-base-after-20261118-155133-d2681c/report.json`; sau merge: `runs/R-base-after-20261118-162922-3b333c/report.json`.
+- Bộ nền sau merge: 110/110 đạt; hoàn sai 0đ, lỗi hãng oan 0, lộ PII 0, không có ca mới hỏng; chi phí 4.278đ/ticket, ROI 1,34, 0 ca ùn. Tỉ lệ chuyển người 23,64% còn cao hơn mục tiêu nên có 20%.
+- 13 test công khai và 15 test C bổ sung đạt; script cục bộ `runs/role_c_checks.py`. Các monitor B chạy không lỗi; chưa chạy test ẩn hay thẻ sự cố vì chưa có gói. Chi tiết cổng và giới hạn: Phiếu B mục B0/B7.1.
+
+### Exit ticket
+
+- Một điều học được: chặn lần ghi retry phải giữ đúng trạng thái tiền đã ghi, để tránh hoàn hai lần hoặc báo sai cho khách.
+- Một điều còn chưa chắc: chống hoàn trùng khi có nhiều tiến trình đồng thời và tính trần đúng theo ngày ngoài thực tế cần timestamp và giao dịch nguyên tử ở backend; mô phỏng hiện tại chưa chứng minh được điều này.
