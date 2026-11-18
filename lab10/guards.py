@@ -34,9 +34,32 @@ from .tools import Verdict
 
 
 def pre_guard(ctx):
+    # A: kiểm tra trước khi agent đọc ticket.
     return Verdict.allow()
+
+
+def _gate_refund(ctx, action):
+    # C: kiểm tra issue_refund; None = không có ý kiến.
+    return None
+
+
+def _gate_carrier(ctx, action):
+    # D: kiểm tra file_carrier_fault và notify_carrier.
+    return None
+
+
+def _gate_reply(ctx, action):
+    # D: kiểm tra send_reply.
+    return None
 
 
 def write_gate(ctx, action):
-    # action = {"tool": "issue_refund", "ticket_id":..., "order_id":..., "amount_vnd":..., "payer":..., ...}
-    return Verdict.allow()
+    # A: điều phối; mỗi người chỉ sửa hàm được phân công.
+    handler = {
+        "issue_refund": _gate_refund,
+        "file_carrier_fault": _gate_carrier,
+        "notify_carrier": _gate_carrier,
+        "send_reply": _gate_reply,
+    }.get(action.get("tool"))
+    verdict = handler(ctx, action) if handler else None
+    return verdict or Verdict.allow()
