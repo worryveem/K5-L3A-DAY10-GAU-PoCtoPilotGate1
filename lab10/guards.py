@@ -39,6 +39,13 @@ from .tools import Verdict
 
 def pre_guard(ctx):
     # A: dùng định danh có cấu trúc; không lấy quyền hạn từ chữ khách viết.
+    facts = ctx.tools.ops_facts()
+    ctx.log(
+        "cost_context",
+        manual_cost_per_ticket_vnd=facts.get("manual_cost_per_ticket_vnd"),
+        review_cost_per_ticket_vnd=facts.get("review_cost_per_ticket_vnd"),
+        recheck_with_note_units=facts.get("recheck_with_note_units"),
+    )
     customer_id = ctx.ticket.get("customer_id")
     if not customer_id:
         return Verdict.escalate("Thiếu định danh khách hàng để xác minh yêu cầu")
@@ -122,21 +129,17 @@ def _gate_refund(ctx, action):
     # Retry sau khi ghi thành công: bỏ riêng lần ghi lặp để agent tiếp tục
     # thông báo khoản đã ghi; chuyển người ở đây sẽ báo sai trạng thái tiền.
     rows = ctx.tools.ledger_rows(order_id=order_id)
-    if rows:
+    ticket_rows = [row for row in rows if row.get("ticket_id") == action.get("ticket_id")]
+    if ticket_rows:
         same_write = (
-            len(rows) == 1
-            and rows[0].get("ticket_id") == action.get("ticket_id")
-            and rows[0].get("amount_vnd") == amount
-            and rows[0].get("payer") == action.get("payer", "LOGIX")
-            and rows[0].get("approval_id") == action.get("approval_id")
+            len(ticket_rows) == 1
+            and ticket_rows[0].get("payer") == action.get("payer", "LOGIX")
+            and ticket_rows[0].get("approval_id") == action.get("approval_id")
         )
         return stop(
             "refund_duplicate_blocked", "Đơn đã có khoản hoàn trong sổ cái; không ghi lần hai",
             deny=same_write, order_id=order_id, retry=same_write,
         )
-    if order.get("refund_status") == "REFUNDED":
-        return stop("refund_duplicate_blocked", "Đơn đã được đối soát là đã hoàn tiền")
-
     try:
         matches = [p for p in ctx.tools.lookup_policies()
                    if H.effective_policy([p], ctx.as_of) is not None]
@@ -154,17 +157,46 @@ def _gate_refund(ctx, action):
         if not cause:
             return stop("refund_tracking_invalid", "Tracking chưa ghi nguyên nhân; không tự suy lỗi hãng")
         delay = H.db_delay_days(parcel, ctx.as_of)
-        expected = H.entitlement_vnd(policy, order, delay, cause)
+        total_entitlement = H.entitlement_vnd(policy, order, delay, cause)
         auto_limit = policy["auto_limit_vnd"]
         paid = order["goods_value_vnd"] + order["shipping_fee_vnd"]
     except (KeyError, TypeError, ValueError):
         return stop("refund_tracking_invalid", "Dữ liệu tracking hoặc chính sách không đủ để tính tiền")
 
+    if any(
+        isinstance(row.get("amount_vnd"), bool)
+        or not isinstance(row.get("amount_vnd"), int)
+        or row["amount_vnd"] < 0
+        or row.get("customer_id") != order["customer_id"]
+        for row in rows
+    ):
+        return stop("refund_ledger_invalid", "Sổ cái cần đối soát trước khi tính khoản còn thiếu")
+    already_paid = sum(row["amount_vnd"] for row in rows)
+    expected = max(0, total_entitlement - already_paid)
+    proposed = amount
     ctx.log("refund_entitlement_checked", order_id=order_id, policy_id=policy["policy_id"],
-            parcel_id=parcel["parcel_id"], delay_days=delay, expected_vnd=expected, proposed_vnd=amount)
-    if amount != expected or amount > paid or action.get("payer", "LOGIX") != "LOGIX":
+            parcel_id=parcel["parcel_id"], delay_days=delay,
+            total_entitlement_vnd=total_entitlement, already_paid_vnd=already_paid,
+            expected_vnd=expected, proposed_vnd=proposed)
+    if expected == 0:
+        return stop("refund_duplicate_blocked", "Không còn quyền lợi chưa được hoàn theo sổ cái và DB",
+                    deny=True, order_id=order_id, already_paid_vnd=already_paid)
+    if (amount not in (total_entitlement, expected) or total_entitlement > paid
+            or action.get("payer", "LOGIX") != "LOGIX"):
         return stop("refund_entitlement_blocked", "Tiền hoàn hoặc bên trả không khớp quyền lợi theo DB",
                     expected_vnd=expected, proposed_vnd=amount)
+    # Model đề xuất tổng quyền lợi; chỉ ghi phần DB xác nhận còn thiếu.
+    amount = expected
+
+    limits = ctx.tools.ops_limits()
+    business = (ctx.gates or {}).get("business", {})
+    budgets = [value for value in (
+        limits.get("max_llm_cost_per_ticket_vnd"),
+        business.get("cost_budget_per_ticket_vnd"),
+    ) if value is not None]
+    if budgets and ctx.cost_vnd > min(budgets):
+        return stop("refund_cost_budget_blocked", "Chi phí LLM đã vượt ngân sách; cần người kiểm tra trước ghi",
+                    spent_vnd=ctx.cost_vnd, budget_vnd=min(budgets))
 
     approval_id = action.get("approval_id")
     if approval_id:
@@ -196,19 +228,19 @@ def _gate_refund(ctx, action):
 
     # Khoản có phê duyệt hợp lệ không tính vào các trần tự động.
     if not approval_id:
-        limits = ctx.tools.ops_limits()
         customer_cap = limits.get("max_auto_refund_per_customer_per_day_vnd")
         customer_spent = sum(r["amount_vnd"] for r in ctx.tools.ledger_rows(
             customer_id=order["customer_id"]) if not r.get("approval_id"))
         if customer_cap is not None and customer_spent + amount > customer_cap:
             return stop("refund_customer_cap_blocked", "Vượt trần hoàn tự động cho một khách; cần người duyệt",
                         spent_vnd=customer_spent, cap_vnd=customer_cap)
-        business = (ctx.gates or {}).get("business", {})
         caps = [v for v in (limits.get("daily_auto_refund_budget_vnd"),
                             business.get("daily_refund_cap_vnd")) if v is not None]
         if caps and ctx.tools.auto_refund_today_vnd() + amount > min(caps):
             return stop("refund_daily_cap_blocked", "Vượt ngân sách hoàn tự động trong ngày; cần người duyệt",
                         cap_vnd=min(caps))
+    if amount != proposed:
+        return Verdict.modify("Chỉ hoàn phần quyền lợi còn thiếu sau đối soát sổ cái", amount_vnd=amount)
     return Verdict.allow()
 
 
