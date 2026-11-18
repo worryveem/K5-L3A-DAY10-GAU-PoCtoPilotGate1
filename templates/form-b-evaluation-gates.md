@@ -1,6 +1,6 @@
 # Phiếu B · Đo, rủi ro, cổng vòng 1 và quyết định v1 · Khối 2A + 2B + chốt (phút 65–115)
 
-**Bàn:** ______
+**Bàn:** GAU
 
 Tiêu chí đã ký ở Phiếu A. Từ phút 65 bàn mới được chạy trợ lý. Khối 2A (65–85) chưa sửa code hay config. Khối 2B (85–105) sửa
 `lab10/guards.py` và `config/operating_gates.json`. Phút 105–115 chốt cổng vòng 1 rồi viết quyết định v1. Sau phút 115 không sửa phiếu này
@@ -29,7 +29,7 @@ Mọi con số trong quyết định Gate 1 phải trỏ về một dòng ở đ
 
 | # | Mã lần chạy | Bộ ticket · mốc | Đổi MỘT thứ gì so với lần trước | pass_rate (khoảng tin cậy 95%) | pass_k | Hoàn sai (đ) · lỗi hãng oan · lộ dữ liệu | Tỉ lệ chuyển người | Kết luận (một câu) |
 |---|---|---|---|---|---|---|---|---|
-| 1 | | base · base | (baseline, chưa có cổng) | | | | | |
+| 1 | `R-base-before-20261118-151553-0176af` | base · base | baseline, chưa có cổng | 0,9909 [0,9727; 1,0] | 0,9545 | 20.000đ · 1 · 0 | 0,2273 | Chưa đạt hai ngưỡng an toàn; chưa đủ căn cứ Tiếp tục. |
 | 2 | | base · after | (cổng vòng 1, thử trước khi chốt) | | | | | |
 | 3 | | base · prepared | (cổng vòng 1 đã chốt) | | | | | |
 | 4 | | | | | | | | |
@@ -45,18 +45,18 @@ python3 -m lab10.eval --suite base --stage base --note "baseline"
 python3 -m lab10.gate --run runs/<mã lần chạy>/report.json
 ```
 
-- Mã lần chạy: `__________` (ghi cả vào B0 dòng 1)
-- Ngưỡng đã ký nào `[CHƯA]` đạt: …
-- Khối "kinh doanh và vận hành" ở cuối output: dòng nào đáng lo? …
-- Khối "theo kho và hãng": kho hoặc hãng nào có số xấu nhất? …
+- Mã lần chạy: `R-base-before-20261118-151553-0176af` (ghi cả vào B0 dòng 1).
+- Ngưỡng đã ký nào `[CHƯA]` đạt: hoàn sai 20.000đ > 0đ và lỗi hãng oan 1 > 0. Mục tiêu nên có về chuyển người cũng chưa đạt: 22,73% > 20%. `pass_rate` 0,9909 và `pass_k` 0,9545 đạt ngưỡng chất lượng nhưng không bù được vi phạm an toàn.
+- Khối "kinh doanh và vận hành" ở cuối output: chi phí 4.203đ/ticket, ROI 1,34, 0 ca ùn, chờ lâu nhất 0 phút và LLM cao nhất 670đ đều trong ngưỡng; tuy vậy trần hoàn tự động trong config chưa được đặt. Phạm vi hiện tại là 100%, 22 ticket/ngày; 5 ca/ngày chuyển người không bảo đảm tải giờ cao điểm khi lưu lượng đổi.
+- Khối "theo kho và hãng": HCM có pass_rate 0,96, hoàn sai 20.000đ và 1 lỗi hãng oan; hãng VNX có pass_rate 0,9714 và cùng tác hại đó. Phân khúc không xác định kho (`?`) có chi phí 10.359đ/ticket > mức làm tay 10.000đ; không gán phân khúc này cho một kho cụ thể khi thiếu dữ liệu.
 
 **Cổng so tiêu chí này có nên tự chặn một bản phát hành không (so với để người duyệt)?**
 
 | Lý lẽ ủng hộ tự chặn | Lý lẽ phản đối |
 |---|---|
-| | |
+| Tự chặn khi vượt ngưỡng an toàn hoặc regression giúp ngăn phát hành lặp lại lỗi ghi sổ, dùng cùng tiêu chí đã ký thay vì tùy người đọc. | Bộ thử nhỏ và dữ liệu mô phỏng có điểm mù; đạt trung bình có thể che phân khúc xấu, và người chịu trách nhiệm vẫn phải kiểm tải duyệt, pháp lý, phạm vi thật. |
 
-Khuyến nghị (khoanh một): **tự chặn · người duyệt · kết hợp**. Vì: …
+Khuyến nghị: **kết hợp**. Cổng tự chặn phát hành khi có vi phạm ngưỡng bắt buộc hoặc ca mới hỏng; người chịu trách nhiệm quyết định phạm vi, phương án sửa và việc mở pilot sau khi xem cả phân khúc, chi phí và tải vận hành. Đây là khuyến nghị tại B1, chưa phải quyết định v1 ở B8.
 
 ---
 

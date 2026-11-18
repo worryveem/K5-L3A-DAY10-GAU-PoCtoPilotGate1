@@ -71,9 +71,9 @@ nhau chia cho số lần chạy có sự kiện `proposal`; lần chạy không 
 
 ### Câu 1.5 · Chọn MỘT kết luận và giải thích một câu
 
-Số minh hoạ trong đề (không phải số của bàn). Khoanh: **(a) · (b) · (c) · (d)**
+Số minh hoạ trong đề (không phải số của bàn). Chọn: **(b)**.
 
-Giải thích một câu: …
+Giải thích một câu: chênh lệch giữa 49/50 và 50/50 nằm trong khoảng tin cậy 95% [0,9400; 1,0] của X, nên chưa đủ căn cứ kết luận Y tốt hơn X có ý nghĩa thống kê; cũng không thể kết luận hai bản chắc chắn như nhau.
 
 ---
 
