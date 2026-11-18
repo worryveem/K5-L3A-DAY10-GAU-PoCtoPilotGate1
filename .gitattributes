@@ -1,0 +1,21 @@
+# Locked template files must retain the LF bytes recorded in MANIFEST.json.
+/data/** text eol=lf
+/lab10/** text eol=lf
+/tests/** text eol=lf
+/incidents/** text eol=lf
+
+# Keep the Windows bytes used by the existing signature and evaluation hashes.
+/lab10/guards.py text eol=crlf
+/lab10/monitors.py text eol=crlf
+/config/*.json text eol=crlf
+/config/*.lock text eol=crlf
+
+# Snapshots and collected artifacts retain their exact bytes on every platform.
+/lab10/guards_round1.py -text
+/config/operating_gates.round1.json -text
+/config/round1.lock -text
+/submission/code/** -text
+/submission/config/** -text
+/submission/runs/** -text
+/submission/docs/** -text
+/submission/manifest.json -text
