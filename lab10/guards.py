@@ -31,6 +31,8 @@ Phần A: kiểm định danh, ghim chính sách theo ngày và kiểm chỉ d�
 Phần C: _gate_refund kiểm quyền lợi DB, phê duyệt, chống ghi trùng và trần tự động.
 Các hàm _gate_carrier, _gate_reply dành cho D hoàn thiện.
 """
+import re
+
 from . import helpers as H
 from .tools import Verdict
 
@@ -210,13 +212,140 @@ def _gate_refund(ctx, action):
     return Verdict.allow()
 
 
+def _sanitize_carrier_payload(payload, order, policy, gates):
+    """Chỉ giữ các trường được phép gửi hãng và xóa thông tin PII người nhận."""
+    blocked = set(
+        (gates or {}).get("legal", {}).get("pii_fields_blocked_to_third_party") or []
+    ) | {"recipient_contact", "customer_note", "name", "phone", "street"}
+    allowed = set(
+        (policy or {}).get("carrier_notice_fields")
+        or ("order_id", "parcel_id", "district", "delay_days")
+    ) - blocked
+
+    rc = (order or {}).get("recipient") or {}
+    pii_strs = [s for s in (rc.get("name"), rc.get("street")) if s]
+    phone_digits = H.digits(rc.get("phone", ""))[-9:]
+
+    clean = {}
+    for k, v in (payload or {}).items():
+        if k not in allowed:
+            continue
+        if isinstance(v, str):
+            val = v
+            for s in pii_strs:
+                val = re.sub(re.escape(s), "[REDACTED]", val, flags=re.I)
+            if phone_digits and phone_digits in H.digits(val):
+                val = re.sub(r"[\d\s\-.()+]{9,}", "[REDACTED]", val)
+            clean[k] = val
+        else:
+            clean[k] = v
+    return clean
+
+
 def _gate_carrier(ctx, action):
-    # D: kiểm tra file_carrier_fault và notify_carrier.
+    """Cổng vai D cho file_carrier_fault và notify_carrier."""
+    tool = action.get("tool")
+    tid = action.get("ticket_id") or ctx.ticket.get("ticket_id")
+    oid = action.get("order_id") or ctx.ticket.get("order_id")
+
+    if tool == "file_carrier_fault":
+        if not ctx.tools.ledger_rows(ticket_id=tid):
+            return Verdict.deny("chưa có khoản hoàn trong sổ cái, không ghi lỗi hãng")
+
+        order = ctx.tools.lookup_order(oid)
+        policy = H.effective_policy(ctx.tools.lookup_policies(), ctx.as_of)
+        if not order or not policy or not order.get("parcels"):
+            return Verdict.deny("thiếu dữ liệu đơn hoặc chính sách để ghi lỗi hãng")
+
+        req_pid = ctx.ticket.get("parcel_id")
+        parcels = order.get("parcels", [])
+        if req_pid and not any(p.get("parcel_id") == req_pid for p in parcels):
+            return Verdict.deny("kiện được chỉ định không thuộc đơn trong DB")
+        if len(parcels) > 1 and not req_pid:
+            faulty_carriers = {
+                p.get("carrier_id")
+                for p in parcels
+                if H.carrier_at_fault(policy, p, H.db_delay_days(p, ctx.as_of))
+            }
+            if len(faulty_carriers) >= 2:
+                return Verdict.deny("đơn nhiều kiện cùng trễ nhưng ticket chưa xác định kiện nào")
+
+        parcel = H.ticket_parcel(order, ctx.ticket, ctx.as_of)
+        if parcel.get("status") not in (None, "DELIVERED", "IN_TRANSIT"):
+            return Verdict.deny("trạng thái kiện không hợp lệ để ghi lỗi hãng")
+
+        delay = H.db_delay_days(parcel, ctx.as_of)
+        if not H.carrier_at_fault(policy, parcel, delay):
+            return Verdict.deny("tracking DB không ghi nhận trễ đủ điều kiện lỗi hãng")
+
+        if ctx.tools.fault_rows(ticket_id=tid) or ctx.tools.fault_rows(
+            order_id=oid, parcel_id=parcel.get("parcel_id")
+        ):
+            return Verdict.deny("đã ghi lỗi hãng cho ticket hoặc kiện hàng này")
+
+        limit = ctx.tools.ops_limits().get("max_auto_strikes_per_carrier_per_day")
+        if limit is None:
+            limit = 2
+        if len(ctx.tools.fault_rows(carrier_id=parcel.get("carrier_id"))) >= limit:
+            return Verdict.deny("chạm trần số lỗi tự động mỗi hãng trong ngày, chuyển người đối soát")
+
+        if (
+            action.get("parcel_id") != parcel.get("parcel_id")
+            or action.get("delay_days") != delay
+            or action.get("carrier_id") != parcel.get("carrier_id")
+            or action.get("driver_id") != parcel.get("driver_id")
+        ):
+            return Verdict.modify(
+                "đồng bộ thông tin lỗi hãng theo đúng kiện trễ trong tracking DB",
+                parcel_id=parcel.get("parcel_id"),
+                delay_days=delay,
+                carrier_id=parcel.get("carrier_id"),
+                driver_id=parcel.get("driver_id"),
+            )
+        return None
+
+    if tool == "notify_carrier":
+        faults = ctx.tools.fault_rows(ticket_id=tid)
+        if not faults:
+            return Verdict.deny("không gửi thông báo phạt khi chưa có bản ghi lỗi hãng")
+
+        order = ctx.tools.lookup_order(faults[0].get("order_id") or oid)
+        policy = H.effective_policy(ctx.tools.lookup_policies(), ctx.as_of)
+        orig_payload = action.get("payload") or {}
+        clean = _sanitize_carrier_payload(orig_payload, order, policy, ctx.gates)
+        target_carrier = faults[0].get("carrier_id")
+
+        changes = {}
+        if clean != orig_payload:
+            changes["payload"] = clean
+        if target_carrier and action.get("carrier_id") != target_carrier:
+            changes["carrier_id"] = target_carrier
+        if changes:
+            return Verdict.modify(
+                "lọc trường/nội dung PII và đồng bộ hãng theo bản ghi lỗi", **changes
+            )
+        return None
+
     return None
 
 
 def _gate_reply(ctx, action):
-    # D: kiểm tra send_reply.
+    """Cổng vai D cho send_reply: số tiền báo khách phải khớp sổ cái thật."""
+    tid = action.get("ticket_id") or ctx.ticket.get("ticket_id")
+    paid = sum(r["amount_vnd"] for r in ctx.tools.ledger_rows(ticket_id=tid))
+    if action.get("amount_vnd", 0) != paid or (
+        paid == 0 and "đã hoàn" in (action.get("text") or "").lower()
+    ):
+        oid = ctx.ticket.get("order_id", "")
+        text = (
+            f"LogiX đã hoàn {paid:,}đ cho đơn {oid}.".replace(",", ".")
+            if paid > 0
+            else (
+                f"Yêu cầu hoàn tiền cho đơn {oid} đã bị từ chối ở bước kiểm tra. "
+                f"LogiX chưa hoàn khoản nào cho đơn này."
+            )
+        )
+        return Verdict.modify("đồng bộ số tiền báo khách theo sổ cái thật", amount_vnd=paid, text=text)
     return None
 
 

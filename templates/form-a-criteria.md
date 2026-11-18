@@ -24,8 +24,8 @@ rồi mới chạy đánh giá. Khối 1 không sửa code.
 
 ### Câu 1.2 · Mục tiêu nhìn từ hai người
 
-- Chị Oanh, kế toán đối soát (không dùng trợ lý, nhưng phải khớp sổ với hãng và shop mỗi tuần): …
-- Chị Hạnh, trưởng ca CSKH (phải duyệt những ca trợ lý chuyển sang): …
+- Chị Oanh, kế toán đối soát (không dùng trợ lý, nhưng phải khớp sổ với hãng và shop mỗi tuần): Mọi khoản hoàn tiền ghi vào sổ cái và mọi lỗi ghi cho hãng vận chuyển phải khớp 100% với chứng từ đơn hàng/tracking thực tế, không ghi trùng, không ghi oan cho hãng hoặc trừ nhầm tiền shop để cuối tuần đối soát không bị lệch sổ hay phát sinh khiếu nại từ đối tác.
+- Chị Hạnh, trưởng ca CSKH (phải duyệt những ca trợ lý chuyển sang): Chỉ nhận đúng các ca thực sự cần người xử lý (vượt hạn mức, thiếu dữ liệu, nghi ngờ gian lận) với đầy đủ ghi chú giải thích ngắn gọn và thời gian chờ trong SLA 60 phút, không bị ngập hàng chờ vì các ca lỗi vặt hay các ca trợ lý tự đẩy sang vô cớ.
 
 ---
 
@@ -48,12 +48,12 @@ trợ lý có đang gây thiệt hại cho bên ngoài LogiX không; không có 
 
 | | Offline, cho MỘT bước (câu 1.3) | Telemetry production (câu 1.4) |
 |---|---|---|
-| **Bước / hành vi được đo** | Chọn phiên bản chính sách hoàn tiền có hiệu lực tại ngày mô phỏng `as_of`. | |
-| **Thước đo** (một câu, có đơn vị) | Tỉ lệ lần chọn sai phiên bản chính sách, đơn vị %. | |
-| **Dữ liệu** (lấy ở đâu, bao nhiêu, ai gán nhãn) | Kế hoạch đo trên bộ nền: 22 ticket trong `data/tickets.jsonl` × 5 seed trong `lab10/__init__.py`. Sau khi ký tiêu chí mới lấy sự kiện `policy.policy_id` từ trace của từng lần chạy. Nhãn tham chiếu được xác định từ bảng `policies` và `as_of` trong `data/world.json`, theo khoảng hiệu lực ngày; A phụ trách đối chiếu quy tắc với `H.effective_policy`. | |
-| **Cách tính** (công thức, mẫu số, cách xử lý ca thiếu dữ liệu) | Với mỗi lần chạy có sự kiện `policy` và đúng một chính sách có khoảng hiệu lực chứa `as_of`, so `policy_id` đã chọn với mã tham chiếu. Tỉ lệ sai = 100 × số lần chọn sai / số lần đủ dữ liệu để so. Lần chưa tới bước chọn chính sách, thiếu dữ liệu hoặc không có duy nhất một chính sách tham chiếu được đếm riêng theo nguyên nhân, không đưa vào mẫu số. Mẫu số bằng 0 thì báo không tính được, không ghi 0%. | |
-| **Khung thời gian / ngưỡng báo động** | (không áp dụng) | |
-| **Điểm mù** (thước đo này KHÔNG thấy gì) | Không xác nhận chính nội dung chính sách hoặc ngày `as_of` đã đúng ngoài thực tế; không đo việc tính tiền, kiểm phê duyệt hay ghi sổ sau khi chọn chính sách. | |
+| **Bước / hành vi được đo** | Chọn phiên bản chính sách hoàn tiền có hiệu lực tại ngày mô phỏng `as_of`. | Ghi lỗi hãng (`file_carrier_fault`) và gửi thông báo cho hãng (`notify_carrier`). |
+| **Thước đo** (một câu, có đơn vị) | Tỉ lệ lần chọn sai phiên bản chính sách, đơn vị %. | Tỉ lệ thông báo/lệnh ghi lỗi bị hãng vận chuyển phản hồi khiếu nại hoặc chứa trường dữ liệu cá nhân (PII) của người nhận hàng (%). |
+| **Dữ liệu** (lấy ở đâu, bao nhiêu, ai gán nhãn) | Kế hoạch đo trên bộ nền: 22 ticket trong `data/tickets.jsonl` × 5 seed trong `lab10/__init__.py`. Sau khi ký tiêu chí mới lấy sự kiện `policy.policy_id` từ trace của từng lần chạy. Nhãn tham chiếu được xác định từ bảng `policies` và `as_of` trong `data/world.json`, theo khoảng hiệu lực ngày; A phụ trách đối chiếu quy tắc với `H.effective_policy`. | Log lệnh ghi `file_carrier_fault`, `notify_carrier` trong `runs/` đối chiếu với phản hồi khiếu nại từ hãng và bộ lọc tên trường/regex PII trên payload gửi đi (không cần nhãn gán tay). |
+| **Cách tính** (công thức, mẫu số, cách xử lý ca thiếu dữ liệu) | Với mỗi lần chạy có sự kiện `policy` và đúng một chính sách có khoảng hiệu lực chứa `as_of`, so `policy_id` đã chọn với mã tham chiếu. Tỉ lệ sai = 100 × số lần chọn sai / số lần đủ dữ liệu để so. Lần chưa tới bước chọn chính sách, thiếu dữ liệu hoặc không có duy nhất một chính sách tham chiếu được đếm riêng theo nguyên nhân, không đưa vào mẫu số. Mẫu số bằng 0 thì báo không tính được, không ghi 0%. | `(Số ca hãng khiếu nại sai lỗi + số payload gửi hãng chứa PII) / Tổng số ca có ghi lỗi hãng trong ngày × 100%`; ca không gửi đi hoặc bị cổng chặn trước không tính vào mẫu số. |
+| **Khung thời gian / ngưỡng báo động** | (không áp dụng) | Theo ngày (rolling 24h) và kiểm tra tức thời mỗi ca; ngưỡng báo động đỏ: `> 0` ca lộ PII hoặc `≥ 1` khiếu nại ghi lỗi oan từ hãng. |
+| **Điểm mù** (thước đo này KHÔNG thấy gì) | Không xác nhận chính nội dung chính sách hoặc ngày `as_of` đã đúng ngoài thực tế; không đo việc tính tiền, kiểm phê duyệt hay ghi sổ sau khi chọn chính sách. | Không phát hiện được lỗi oan nếu hãng nhỏ bận chưa kịp phản hồi trong ngày, hoặc dữ liệu cá nhân bị khách tự gõ dưới dạng viết tắt không khớp mẫu lọc. |
 
 **Ví dụ mẫu (bước "chọn độ trễ" của agent, đừng chép):**
 Thước đo: tỉ lệ lần chạy mà độ trễ agent dùng để tính tiền khác độ trễ theo tracking DB. Dữ liệu: sự kiện `proposal.delay_days_used`

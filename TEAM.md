@@ -15,7 +15,7 @@ Họ tên đầy đủ và MSSV của **mọi** thành viên; thêm dòng nếu 
 | --: | --------- | ---- | --- | :---------: |
 |   1 | Đỗ Minh Hoàng | 2A202603554 | Kỹ sư cổng (A) | Có |
 |   2 | Phạm Đức Hồng Đức | 2A202603558 | Kỹ sư cổng hoàn tiền (C) | Không |
-|   3 |           |      |     |             |
+|   3 | Bùi Lê Công Tuấn | 2A202603610 | Vận hành và pháp lý (D) | Không |
 |   4 |           |      |     |             |
 |   5 |           |      |     |             |
 
@@ -75,3 +75,27 @@ Kỹ sư cổng hoàn tiền (C): hàm `_gate_refund` trong `lab10/guards.py`; k
 
 - Một điều học được: chặn lần ghi retry phải giữ đúng trạng thái tiền đã ghi, để tránh hoàn hai lần hoặc báo sai cho khách.
 - Một điều còn chưa chắc: chống hoàn trùng khi có nhiều tiến trình đồng thời và tính trần đúng theo ngày ngoài thực tế cần timestamp và giao dịch nguyên tử ở backend; mô phỏng hiện tại chưa chứng minh được điều này.
+
+## BuiLeCongTuan-2A202603610
+
+### Phần việc phụ trách
+
+Vận hành và pháp lý (D): nhánh `_gate_carrier` (`file_carrier_fault`, `notify_carrier`) và `_gate_reply` (`send_reply`) trong `lab10/guards.py`; mục `operations` và `legal` trong `config/operating_gates.json`; Phiếu A (A1 câu 1.2, A2 câu 1.4); Phiếu B (B4, B5, B7.1 G4–G5, B7.5 Runbook 1–3, B7.6 Giờ cao điểm); chuẩn bị `submission/submission.json`.
+
+### Đóng góp cụ thể
+
+- Viết `_gate_carrier`: kiểm tra đã có khoản hoàn trong sổ cái, chọn đúng kiện trễ qua `H.ticket_parcel` (từ chối đơn nhiều kiện cùng trễ khác hãng nếu thiếu `parcel_id`), kiểm `H.carrier_at_fault`, chặn ghi trùng lỗi hãng và chạm trần lỗi tự động/hãng/ngày (`ops_limits`), chỉ cho `notify_carrier` khi đã có lỗi thật và lọc sạch trường/chuỗi PII khỏi `payload`.
+- Viết `_gate_reply`: đối chiếu `amount_vnd` và câu chữ báo khách với tổng đã ghi thật trong `ledger_rows`.
+- Cấu hình `config/operating_gates.json` mục `operations` (`pic: "NV-TUNG"`, `approver_id: "NV-HANH"`, `reviewers_on_shift: 1`, `review_capacity_per_hour: 6`, `max_queue_wait_minutes: 60`, `decision_note: true`, `review_sampling_pct: 10`, `stop_conditions`, `alert_channel: "#logix-pilot-ops"`) và mục `legal` (`pii_fields_blocked_to_third_party`, `carrier_fault_requires_recorded_cause: true`).
+- Điền Phiếu A (mục tiêu nhìn từ `NV-OANH`, `NV-HANH`; telemetry production cho bên ngoài LogiX) và Phiếu B (HAZOP vòng 1, checklist 9 nhóm việc, `B7.1` G4–G5, Runbook 1–3 đồng bộ tiêu chí đã ký và kịch bản Giờ cao điểm); điền sẵn `team` và `members` trong `submission/submission.json`.
+
+### Bằng chứng
+
+- Lần chạy tích hợp đủ 4 vai (A + B + C + D): `runs/R-base-after-20261118-165944-796efc` (`110/110` đạt, `pass_rate = 1.0`, `pass_k = 1.0`, `wrongful_refund_vnd = 0`, `wrongful_carrier_faults = 0`, `pii_leaks = 0`, `queue.stuck = 0`, `cost_per_ticket_vnd = 4495đ`, `ROI = 1.22`, không vượt trần; `lab10.gate` đạt toàn bộ `required` và `business_ops`).
+- Bộ test công khai: `python -m unittest discover -s tests -v` (`Ran 13 tests ... OK`).
+- Phiếu A: `templates/form-a-criteria.md` (A1 câu 1.2, A2 câu 1.4); Phiếu B: `templates/form-b-evaluation-gates.md` (B0 dòng 8, B4, B5, B7.1 G4–G5, B7.5, B7.6).
+
+### Exit ticket
+
+- Điều học được: cổng chặn ở tầng hệ thống (`write_gate`, `operating_gates.json`) giúp ngăn lỗi oan cho bên thứ ba và rò rỉ PII mà không phụ thuộc vào prompt.
+- Điều còn chưa chắc: hành vi hàng chờ và chi phí khi có sự cố đột biến ở Vòng 2 (cần kiểm chứng thêm sau khi kéo thẻ và chạy `grade`).
