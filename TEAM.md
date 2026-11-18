@@ -115,23 +115,28 @@ Vận hành và pháp lý (D): nhánh `_gate_carrier` (`file_carrier_fault`, `no
 
 ## VuDucTam-2A202603522
 
-*Mục này do trưởng nhóm tổng hợp từ commit `6074755`; Tâm cần tự rà lại và tự viết exit ticket.*
-
 ### Phần việc phụ trách
 
-Kỹ sư cổng, phụ trách monitor và kiểm thử: `lab10/monitors.py`; Phiếu B mục B0 (dòng 5), B2, B7.2, B7.3.
+Kỹ sư cổng B, phụ trách monitor và kiểm thử: `lab10/monitors.py`; Phiếu B mục B0 (dòng 5), B2, B7.2, B7.3; thẻ S5, Phiếu C mục C2 (soát lỗi), C6 (fault tree trước), C8 (monitor chi phí theo kho), C9 (fault tree sau).
 
 ### Đóng góp cụ thể
 
 - Thêm ba monitor production vào `MONITORS`, không dùng nhãn đúng/sai: `model_override_rate`, `peak_review_arrivals_per_hour`, `carrier_fault_delay_mismatch_rate`.
 - Điền bảng soát lỗi B2 cho `T-002@55`: hai lỗi chìm (hoàn oan 20.000đ, ghi lỗi oan cho VNX), nguồn lỗi và hướng xử lý gắn với hai monitor mới.
 - Viết B7.2 (hai bước tránh rò rỉ dữ liệu giữa bộ nền, ticket tự viết và gói thẻ) và B7.3 (behavioral test: cùng đơn `O-1001`, chỉ khách `C-01` khớp chủ đơn mới được xử lý; `C-02` bị chuyển người trước mọi lệnh ghi).
+- Sau khi nhận bản A/C/D và thẻ S5, chạy lại hai ticket hiểm ở snapshot `prepared`; ca đúng chủ được hoàn 25.000đ và payload gửi hãng được lọc PII, ca sai chủ không tạo lệnh ghi.
+- Rà ba trace S5 theo hai kiểu lỗi khác nhau: `S5-02@11` hoàn trùng ở base; `S5-21@11` bị chặn nhầm khoản còn thiếu ở prepared; `S5-51@11` đạt nhãn ticket nhưng làm phân khúc HCM-B2B tốn hơn làm tay. Bổ sung bằng chứng vào C2 và đối chiếu fault tree C6/C9 với cả nhánh kỹ thuật lẫn kinh tế.
+- Kiểm tra ba monitor S5 do nhóm đã thêm vào `monitors.py`: chi phí biến đổi cao nhất theo kho, số kho đắt hơn làm tay, tỉ lệ thiếu telemetry giá. Đối chiếu kết quả monitor với report; không nhận phần code S5 này là commit của cá nhân khi nó đã có trong bản pull.
+- Khôi phục đúng byte LF cho 19 file khóa bị Git Windows checkout thành CRLF; xác minh từng hash với `lab10/MANIFEST.json`, không đổi nội dung logic hoặc tiêu chí đã ký. Chạy lại grade S5 để kiểm integrity, visible, regression và monitor.
 
 ### Bằng chứng
 
 - Commit `6074755` ("monitor và test"), merge vào main qua PR #1 `b0e7fba`.
 - Lần chạy `R-base-after-20261118-154805-372946` (B0 dòng 5): 13 test công khai đạt; `model_override_rate = 0,045455` (5/110), `carrier_fault_delay_mismatch_rate = 0,017857` (1/56), `peak_review_arrivals_per_hour = 1`.
+- Grade sau khi khôi phục byte file khóa: `R-S5-grade-20261118-223940-b4f9ee` = PASS-VISIBLE; integrity, criteria, visible, regression, monitor đều đạt. S5 after phục vụ 60% ticket, 3.980đ/ticket, ROI 1,51; test ẩn chưa có trên máy.
+- Trace đối chiếu: `S5-02@11` base, `S5-21@11` prepared, `S5-51@11` prepared; hai ticket tự tạo trên `base · prepared` ở Phiếu B mục B7.3. Phiếu C: C2, C6, C8, C9.
 
 ### Exit ticket
 
-Một điều học được, một điều còn chưa chắc.
+- Điều học được: nhãn đúng của từng ticket không bảo đảm pilot có lời; `S5-51@11` đạt nhãn nhưng HCM-B2B ở prepared vẫn tốn 10.382đ/ticket vì cần người duyệt sau khi đã trả tiền máy.
+- Điều còn chưa chắc: giá làm tay và tỉ lệ cần duyệt của B2B có giữ nguyên ngoài dữ liệu mock hay không; cần đo cả ticket ngoài pilot và kiểm ledger ghi đồng thời trước khi mở rộng.

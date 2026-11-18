@@ -37,6 +37,7 @@ Mỗi lệnh `lab10.eval` và `lab10.grade` tự ghi một dòng vào `runs/jour
 | 5 | `R-base-after-20261118-173643-b4f9ee` | base · after | Kiểm regression trên bản cuối | 1,0 [1,0; 1,0] | 1,0 | 0đ · 0 · 0 | 0,2273 | 110/110 đạt, độ phủ 100%, không có ca mới hỏng. |
 | 6 | `R-S5-after-20261118-221839-b4f9ee` | S5 · after | Người C tái kiểm cổng hoàn phần còn thiếu, trần và phê duyệt trên code đã merge; không đổi code/config | 1,0 [1,0; 1,0] | 1,0 | 0đ · 0 · 0 | 0,1667 | 90/90 đạt, 60% độ phủ; 22 kiểm C, 13 công khai và 10 kiểm S5 đạt. |
 | 7 | `R-base-after-20261118-221840-b4f9ee` | base · after | Người C kiểm regression sau rà S5; không đổi code/config | 1,0 [1,0; 1,0] | 1,0 | 0đ · 0 · 0 | 0,2273 | 110/110 đạt, giữ 100% độ phủ và không có ca mới hỏng. |
+| 8 | `R-S5-after-20261118-223940-b4f9ee` (grade `R-S5-grade-20261118-223940-b4f9ee`) | S5 · after | Người B đối chiếu trace, fault tree và monitor trên bản cuối; không đổi code/config | 1,0 [1,0; 1,0] | 1,0 | 0đ · 0 · 0 | 0,1667 | PASS-VISIBLE: integrity, visible, regression, monitor đạt; 60% độ phủ, 3.980đ/ticket, ROI 1,51. |
 
 Grade cuối trước gom bài: `R-S5-grade-20261118-173643-b4f9ee` = PASS-VISIBLE; chưa có test ẩn. Quyết định v1 và snapshot giữ nguyên.
 
@@ -125,6 +126,8 @@ người chịu hại thường là bên thứ ba). Định nghĩa đầy đủ 
 | Kiểu giải pháp: phản hồi cho người dùng / trao quyền kiểm soát cho người / khác | Đối soát ledger trước ghi, chặn retry đã thành công. | Tính khoản còn thiếu và sửa tham số ghi bằng DB. | Người phụ trách thu hẹp pilot theo kho có bằng chứng, đơn ngoài phạm vi đi thẳng làm tay. |
 | Đường đi của người sau khi có giải pháp (ví dụ: ticket chuyển sang người duyệt → duyệt → khách được trả lời) | Đã hoàn đủ: từ chối khoản ghi mới và báo đúng chưa phát sinh khoản mới. | Hoàn đúng phần còn thiếu, kiểm phê duyệt/trần trên khoản thực ghi rồi báo đúng sổ. | B2B do NV-HANH điều phối thủ công; bán lẻ còn trong pilot và vẫn có kiểm mẫu. |
 | Hệ thống học được gì (tín hiệu ghi lại để theo dõi: tên metric trong `monitors.py`) | Theo dõi event chặn ghi trùng và tổng ledger so quyền lợi DB; monitor mới sẽ ghi ở C8 sau triển khai. | Event quyền lợi tổng/đã trả/còn thiếu cần nhìn thấy trong trace. | Cần monitor chi phí biến đổi theo kho và kho đắt hơn làm tay, không chỉ escalation_rate. |
+
+**Rà soát của B trên snapshot và bản cuối:** `S5-02@11` ở base ghi thêm 25.000đ và lỗi GHSH, nhãn yêu cầu không hoàn; `S5-21@11` ở prepared có đề xuất 22.000đ nhưng `refund_duplicate_blocked` chuyển người dù còn thiếu 12.000đ; `S5-51@11` ở prepared có `KẾT QUẢ: ĐẠT` theo nhãn ticket, song đề xuất 230.000đ vượt hạn mức tự động 200.000đ nên vẫn phát sinh tiền máy trước khi chuyển người. Lỗi 1 là ghi lặp, lỗi 2 là từ chối quyền lợi còn thiếu; lỗi 3 là thiệt hại kinh tế theo phân khúc mà nhãn ticket không phản ánh.
 
 Yêu cầu: ít nhất **hai lỗi có nguồn khác nhau** ở phần 2, và ít nhất một lỗi được xếp đúng là **lỗi chìm**.
 
@@ -321,6 +324,8 @@ thường biến một nhánh HOẶC thành VÀ: tác hại chỉ còn xảy ra 
 | [2] | Theo dõi đủ chi phí máy + người theo kho; không giữ nhóm luôn đắt hơn làm tay trong pilot tự động. | Không phải mọi loại đơn đều giảm được công người khi thêm model. |
 | [3] | Chặn đọc vượt budget và chặn tổng ghi vượt quyền lợi, kể cả retry. | Khách có thể gửi nội dung rất dài hoặc nhắc lại qua nhiều kênh. |
 
+Người B đối chiếu lại cây với `S5-02@11` base, `S5-21@11` prepared và bảng chi phí theo kho của grade `R-S5-grade-20261118-223940-b4f9ee`: cùng sự kiện đỉnh có một nhánh tiền/quyền lợi và một nhánh kinh doanh/vận hành độc lập. `S5-51@11` đạt nhãn chất lượng nhưng HCM-B2B ở prepared vẫn 10.382đ/ticket, vì vậy không được xóa nhánh [2] khi pass_rate tăng.
+
 **Ví dụ mẫu một nhánh (bộ nền, đừng chép):** đỉnh "hãng VNX nhận lỗi oan cho đơn O-1002" ← [1] agent dùng độ trễ 5 ngày ←
 model lấy số trong ticket đè lên DB (`T-002@55`). Spec bị vi phạm: độ trễ dùng để ghi lỗi phải lấy từ tracking DB. Giả định
 môi trường sai: "khách ghi đúng số ngày trễ". Sau khi sửa: [1] VÀ [cổng ghi so với DB hỏng]; tầng chặn; ngăn được nhánh này
@@ -382,6 +387,8 @@ Thẻ S5 dùng mục này cho một con số kinh doanh: chi phí mỗi ticket t
 
 ROI 1,51 chỉ thuộc phần pilot; các chi phí toàn quy trình ở bảng này phụ thuộc giá công giả định. Ba monitor C8 cung cấp tín hiệu phát hiện, chưa tự thực thi các ngưỡng báo động hay thay đổi phạm vi.
 
+Kiểm tra lại bởi B bằng grade `R-S5-grade-20261118-223940-b4f9ee`: mục `6 monitor` đạt; `max_warehouse_variable_cost_vnd` đổi từ 10.200đ trên bộ nền sang 4.276,75đ ở S5 after, `warehouses_over_manual_cost` từ 1 sang 0, và không có lỗi chạy monitor. Hai giá trị so sánh này phản ánh hai bộ ticket khác nhau ở cùng mốc after, không phải mức giảm trực tiếp trên cùng tập ticket.
+
 ---
 
 <a id="c9"></a>
@@ -404,6 +411,8 @@ Vẽ lại cây ở C6. Ở mỗi nhánh đã xử lý, thêm một nút `VÀ [g
 | [1] | `_gate_refund`: quyền lợi tổng - đã trả, deny hết quyền lợi, retry không ghi lại | chặn | Ngăn trên dữ liệu đúng và chạy tuần tự; 10 kiểm tra S5 bổ sung đạt, gồm hoàn một phần và confirm retry. | Cần giao dịch nguyên tử/idempotency ở backend thật; chưa có kiểm thử đồng thời. |
 | [2] | `business.pilot_scope`, `max_warehouse_variable_cost_vnd`, `warehouses_over_manual_cost` | vận hành / phát hiện | Kho ngoài whitelist không đi vào agent; S5 vẫn giữ 18/30 ticket, không về 0. | Kho bị phân loại sai hoặc công thủ công tăng giá làm giả định kinh tế không còn đúng. |
 | [3] | Budget 1.500đ, `ctx.cost_vnd`, `cost_context_missing_rate`, Runbook 4–5 | giới hạn thiệt hại / phát hiện | Giảm rủi ro chi phí, không tự thay được người trực hay giá dịch vụ. | Monitor không thấy đơn ngoài pilot; cần đối soát toàn bộ luồng và tải cao điểm thật. |
+
+Người B xác nhận cây sau sửa với grade `R-S5-grade-20261118-223940-b4f9ee`: integrity, criteria, visible, regression và monitor đều đạt; S5 after phục vụ 60% ticket, 3.980đ/ticket, ROI 1,51, không còn kho trong pilot vượt giá làm tay. Đây là PASS-VISIBLE; test ẩn và điều kiện ledger ghi đồng thời ngoài mô phỏng vẫn là nhánh còn hở.
 
 ---
 
