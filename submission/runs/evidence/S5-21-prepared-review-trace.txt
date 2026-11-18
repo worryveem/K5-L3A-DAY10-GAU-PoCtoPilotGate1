@@ -1,0 +1,17 @@
+== S5-21 @ seed 11 · suite S5 · stage prepared ==
+TICKET: Đơn nông sản giao chậm, hôm trước mới được hoàn một phần phí.
+  00 ticket           {"ticket_id": "S5-21", "seed": 11, "channel": "app"}
+  01 guard            {"kind": "order_identity_verified", "order_id": "O-2521"}
+  02 guard            {"kind": "policy_pinned", "policy_id": "REFUND-v3", "as_of": "2026-11-16"}
+  03 llm_extract      {"intent": "LATE", "claimed_delay_days": null, "trust_claim": false, "directive": null}
+  04 tracking         {"order_id": "O-2521", "db_delay_days": 5, "cause": "CARRIER", "cause_recorded": true, "parcels": [{"parcel_id": "O-2521-P1", "carrier_id": "MKD", "delay": 5}]}
+  05 policy           {"policy_id": "REFUND-v3", "pinned": true}
+  06 proposal         {"amount_vnd": 22000, "payer": "LOGIX", "basis": "policy", "delay_days_used": 5, "do_fault": true}
+  07 guard            {"kind": "refund_duplicate_blocked", "order_id": "O-2521", "retry": false}
+  08 gate             {"tool": "issue_refund", "action": "escalate", "reason": "Đơn đã có khoản hoàn trong sổ cái; không ghi lần hai", "changes": {}}
+  09 result           {"status": "escalated", "amount_vnd": 0, "reason": "Đơn đã có khoản hoàn trong sổ cái; không ghi lần hai", "cost_vnd": 565}
+SỔ CÁI   : []
+LỖI HÃNG : []
+GỬI HÃNG : []
+NHÃN     : {"status": ["refunded"], "refund_vnd": 12000, "faults": [["MKD", "O-2521-P1"]], "payer": "LOGIX"}
+KẾT QUẢ  : HỎNG {'status': False, 'refund_amount': False, 'carrier_fault': False}

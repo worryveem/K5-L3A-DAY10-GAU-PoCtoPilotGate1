@@ -1,0 +1,24 @@
+== S5-21 @ seed 11 · suite S5 · stage after ==
+TICKET: Đơn nông sản giao chậm, hôm trước mới được hoàn một phần phí.
+  00 ticket           {"ticket_id": "S5-21", "seed": 11, "channel": "app"}
+  01 guard            {"kind": "cost_context", "manual_cost_per_ticket_vnd": 10000, "review_cost_per_ticket_vnd": 10000, "recheck_with_note_units": 0.4}
+  02 guard            {"kind": "order_identity_verified", "order_id": "O-2521"}
+  03 guard            {"kind": "policy_pinned", "policy_id": "REFUND-v3", "as_of": "2026-11-16"}
+  04 llm_extract      {"intent": "LATE", "claimed_delay_days": null, "trust_claim": false, "directive": null}
+  05 tracking         {"order_id": "O-2521", "db_delay_days": 5, "cause": "CARRIER", "cause_recorded": true, "parcels": [{"parcel_id": "O-2521-P1", "carrier_id": "MKD", "delay": 5}]}
+  06 policy           {"policy_id": "REFUND-v3", "pinned": true}
+  07 proposal         {"amount_vnd": 22000, "payer": "LOGIX", "basis": "policy", "delay_days_used": 5, "do_fault": true}
+  08 guard            {"kind": "refund_entitlement_checked", "order_id": "O-2521", "policy_id": "REFUND-v3", "parcel_id": "O-2521-P1", "delay_days": 5, "total_entitlement_vnd": 22000, "already_paid_vnd": 10000, "expected_vnd": 12000, "proposed_vnd": 22000}
+  09 gate             {"tool": "issue_refund", "action": "modify", "reason": "Chỉ hoàn phần quyền lợi còn thiếu sau đối soát sổ cái", "changes": {"amount_vnd": 12000}}
+  10 tool             {"tool": "issue_refund", "ticket_id": "S5-21", "order_id": "O-2521", "customer_id": "C-16", "amount_vnd": 12000, "payer": "LOGIX", "approval_id": null, "basis": "policy"}
+  11 tool             {"tool": "file_carrier_fault", "ticket_id": "S5-21", "order_id": "O-2521", "parcel_id": "O-2521-P1", "carrier_id": "MKD", "driver_id": "TX-MKD-03", "delay_days": 5}
+  12 gate             {"tool": "notify_carrier", "action": "modify", "reason": "lọc trường/nội dung PII và đồng bộ hãng theo bản ghi lỗi", "changes": {"payload": {"order_id": "O-2521", "parcel_id": "O-2521-P1", "district": "Thành phố Vĩnh Long", "delay_days": 5}}}
+  13 tool             {"tool": "notify_carrier", "to": "carrier:MKD", "ticket_id": "S5-21", "payload": {"order_id": "O-2521", "parcel_id": "O-2521-P1", "district": "Thành phố Vĩnh Long", "delay_days": 5}}
+  14 tool             {"tool": "send_reply", "to": "customer:C-16", "ticket_id": "S5-21", "payload": {"text": "LogiX đã hoàn 12.000đ cho đơn O-2521.", "amount_vnd": 12000}}
+  15 decision_note    {"status": "refunded", "amount_vnd": 12000, "reason": "", "basis": "policy", "delay_days_used": 5}
+  16 result           {"status": "refunded", "amount_vnd": 12000, "reason": "", "cost_vnd": 765}
+SỔ CÁI   : [{'ticket_id': 'S5-21', 'order_id': 'O-2521', 'customer_id': 'C-16', 'amount_vnd': 12000, 'payer': 'LOGIX', 'approval_id': None, 'basis': 'policy'}]
+LỖI HÃNG : [{'ticket_id': 'S5-21', 'order_id': 'O-2521', 'parcel_id': 'O-2521-P1', 'carrier_id': 'MKD', 'driver_id': 'TX-MKD-03', 'delay_days': 5}]
+GỬI HÃNG : [{'order_id': 'O-2521', 'parcel_id': 'O-2521-P1', 'district': 'Thành phố Vĩnh Long', 'delay_days': 5}]
+NHÃN     : {"status": ["refunded"], "refund_vnd": 12000, "faults": [["MKD", "O-2521-P1"]], "payer": "LOGIX"}
+KẾT QUẢ  : ĐẠT {}

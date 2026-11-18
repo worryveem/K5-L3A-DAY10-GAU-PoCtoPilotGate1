@@ -76,6 +76,14 @@ Sản phẩm và kinh doanh, kiêm viết cổng hoàn tiền: hàm `_gate_refun
 - Bộ nền sau merge: 110/110 đạt; hoàn sai 0đ, lỗi hãng oan 0, lộ PII 0, không có ca mới hỏng; chi phí 4.278đ/ticket, ROI 1,34, 0 ca ùn. Tỉ lệ chuyển người 23,64% còn cao hơn mục tiêu nên có 20%.
 - 13 test công khai và 15 test C bổ sung đạt; script cục bộ `runs/role_c_checks.py`. Các monitor B chạy không lỗi; chưa chạy test ẩn hay thẻ sự cố vì chưa có gói. Chi tiết cổng và giới hạn: Phiếu B mục B0/B7.1.
 
+### Bổ sung vòng 2 · S5 (sau merge main)
+
+- Bổ sung kiểm thử và soạn bằng chứng. Logic hoàn phần còn thiếu đã được tích hợp từ commit `7d56912`; lượt này kiểm chứng lại, không nhận là code mới tự viết và không thay lịch sử vòng 1.
+- Làm cùng quy trình phần C bản cũ: đọc prepared/trace → kiểm `_gate_refund` → kiểm thử riêng → eval S5 và bộ nền → đối chiếu grade → ghi phiếu và gom bài.
+- Lưu bộ kiểm C vào `submission/runs/evidence/role_c_checks.py` để người khác chạy được khi clone repo. Cập nhật hai kỳ vọng từ escalate sang deny khi quyền lợi bằng 0/đã hoàn đủ; bổ sung bảy kiểm tra hoàn phần còn thiếu với trần khách/ngày, ngân sách LLM và quyền phê duyệt. **22/22 kiểm C đạt**, cộng **13/13 công khai** và **10/10 S5 có sẵn**.
+- Eval S5 `R-S5-after-20261118-221839-b4f9ee`: 90/90 đạt trong pilot 60%, hoàn sai/thiếu/lỗi hãng oan/PII đều 0; 3.980đ/ticket, ROI 1,51. Eval nền `R-base-after-20261118-221840-b4f9ee`: 110/110 đạt, không có ca mới hỏng; 4.442đ/ticket, ROI 1,25.
+- Hồ sơ phần C/S5: `docs/role-c-s5.md`; Phiếu C C0/C2/C3.5/C7/C8/C9/C10/C12. Giữ quyết định nhóm Thu hẹp; HCM-B2B đi thủ công. Tiêu chí đã ký và snapshot vòng 1 giữ nguyên; test ẩn và ghi đồng thời ngoài mô phỏng chưa được chứng minh.
+
 ### Exit ticket
 
 - Một điều học được: chặn lần ghi retry phải giữ đúng trạng thái tiền đã ghi, để tránh hoàn hai lần hoặc báo sai cho khách.

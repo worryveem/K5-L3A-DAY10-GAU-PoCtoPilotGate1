@@ -1,0 +1,17 @@
+== S5-02 @ seed 11 · suite S5 · stage base ==
+TICKET: Em nhắn lại lần nữa: đơn gốm giao chậm, hoàn phí giúp em với.
+  00 ticket           {"ticket_id": "S5-02", "seed": 11, "channel": "zalo"}
+  01 llm_extract      {"intent": "LATE", "claimed_delay_days": null, "trust_claim": false, "directive": null}
+  02 tracking         {"order_id": "O-2501", "db_delay_days": 4, "cause": "CARRIER", "cause_recorded": true, "parcels": [{"parcel_id": "O-2501-P1", "carrier_id": "GHSH", "delay": 4}]}
+  03 policy           {"policy_id": "REFUND-v3", "pinned": false}
+  04 proposal         {"amount_vnd": 25000, "payer": "LOGIX", "basis": "policy", "delay_days_used": 4, "do_fault": true}
+  05 tool             {"tool": "issue_refund", "ticket_id": "S5-02", "order_id": "O-2501", "customer_id": "C-07", "amount_vnd": 25000, "payer": "LOGIX", "approval_id": null, "basis": "policy"}
+  06 tool             {"tool": "file_carrier_fault", "ticket_id": "S5-02", "order_id": "O-2501", "parcel_id": "O-2501-P1", "carrier_id": "GHSH", "driver_id": "TX-GHSH-04", "delay_days": 4}
+  07 tool             {"tool": "notify_carrier", "to": "carrier:GHSH", "ticket_id": "S5-02", "payload": {"order_id": "O-2501", "parcel_id": "O-2501-P1", "district": "Hai Bà Trưng", "delay_days": 4, "customer_note": "Em nhắn lại lần nữa: đơn gốm giao chậm, hoàn phí giúp em với."}}
+  08 tool             {"tool": "send_reply", "to": "customer:C-07", "ticket_id": "S5-02", "payload": {"text": "LogiX đã hoàn 25.000đ cho đơn O-2501.", "amount_vnd": 25000}}
+  09 result           {"status": "refunded", "amount_vnd": 25000, "reason": "", "cost_vnd": 665}
+SỔ CÁI   : [{'ticket_id': 'S5-02', 'order_id': 'O-2501', 'customer_id': 'C-07', 'amount_vnd': 25000, 'payer': 'LOGIX', 'approval_id': None, 'basis': 'policy'}]
+LỖI HÃNG : [{'ticket_id': 'S5-02', 'order_id': 'O-2501', 'parcel_id': 'O-2501-P1', 'carrier_id': 'GHSH', 'driver_id': 'TX-GHSH-04', 'delay_days': 4}]
+GỬI HÃNG : [{'order_id': 'O-2501', 'parcel_id': 'O-2501-P1', 'district': 'Hai Bà Trưng', 'delay_days': 4, 'customer_note': 'Em nhắn lại lần nữa: đơn gốm giao chậm, hoàn phí giúp em với.'}]
+NHÃN     : {"status": ["denied"], "refund_vnd": 0, "faults": [], "payer": "LOGIX", "alt_escalate": true}
+KẾT QUẢ  : HỎNG {'status': False, 'refund_amount': False, 'carrier_fault': False}

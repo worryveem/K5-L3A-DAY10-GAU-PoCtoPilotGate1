@@ -35,8 +35,17 @@ Mỗi lệnh `lab10.eval` và `lab10.grade` tự ghi một dòng vào `runs/jour
 | 3 | `R-S5-after-20261118-173623-d31f05` | S5 · after | Thêm telemetry và ba monitor chi phí theo kho, chưa đổi phạm vi | 1,0 [1,0; 1,0] | 1,0 | 0đ · 0 · 0 | 0,5 | Monitor phát hiện 1 kho đắt hơn làm tay; mức cao nhất 10.382,25đ/ticket, không thiếu telemetry. |
 | 4 | `R-S5-after-20261118-173642-b4f9ee` | S5 · after | Giữ HN/HCM/DN/CT; B2B đi thẳng thủ công theo bằng chứng kinh tế | 1,0 [1,0; 1,0] | 1,0 | 0đ · 0 · 0 | 0,1667 | 90/90 đạt, độ phủ 60%; 3.980đ/ticket, ROI 1,51, không vượt trần. |
 | 5 | `R-base-after-20261118-173643-b4f9ee` | base · after | Kiểm regression trên bản cuối | 1,0 [1,0; 1,0] | 1,0 | 0đ · 0 · 0 | 0,2273 | 110/110 đạt, độ phủ 100%, không có ca mới hỏng. |
+| 6 | `R-S5-after-20261118-221839-b4f9ee` | S5 · after | Người C tái kiểm cổng hoàn phần còn thiếu, trần và phê duyệt trên code đã merge; không đổi code/config | 1,0 [1,0; 1,0] | 1,0 | 0đ · 0 · 0 | 0,1667 | 90/90 đạt, 60% độ phủ; 22 kiểm C, 13 công khai và 10 kiểm S5 đạt. |
+| 7 | `R-base-after-20261118-221840-b4f9ee` | base · after | Người C kiểm regression sau rà S5; không đổi code/config | 1,0 [1,0; 1,0] | 1,0 | 0đ · 0 · 0 | 0,2273 | 110/110 đạt, giữ 100% độ phủ và không có ca mới hỏng. |
 
 Grade cuối trước gom bài: `R-S5-grade-20261118-173643-b4f9ee` = PASS-VISIBLE; chưa có test ẩn. Quyết định v1 và snapshot giữ nguyên.
+
+
+**Rà soát bổ sung sau merge (không thay mốc phân tích ban đầu hay quyết định v1/v2):**
+- Grade xác nhận `R-S5-grade-20261118-220840-b4f9ee`: **PASS-VISIBLE (chưa chạy test ẩn)**. Ba mốc tái chạy: base `R-S5-before-20261118-220842-b4f9ee`, prepared `R-S5-prepared-20261118-220842-b4f9ee`, after `R-S5-after-20261118-220842-b4f9ee`.
+- Chạy lại 13 test công khai và 10 test bổ sung trong `submission/runs/evidence/s5_validation.py`: đều đạt. Code/config giữ nguyên hash `b4f9eee86d33`; tiêu chí và snapshot vòng 1 còn nguyên.
+- Report mới được gom vào `submission/runs/grade-report.*`; các mã lần chạy cũ trong C0–C12 là lịch sử phân tích và quyết định, không đổi thành thời điểm rà soát.
+
 
 ---
 
@@ -89,6 +98,15 @@ người chịu hại thường là bên thứ ba). Định nghĩa đầy đủ 
 | 1 | S5-02@11 base: `issue_refund amount_vnd=25000` và ghi lỗi GHSH lần nữa sau S5-01 cùng đơn. | LogiX mất tiền, GHSH bị ghi lỗi thêm; agent vẫn báo refunded. | cao | lỗi chìm |
 | 2 | S5-21@11 prepared: `refund_duplicate_blocked` dù ledger mới trả 10.000đ trên quyền lợi 22.000đ; không hoàn 12.000đ còn lại. | Khách bị thiếu quyền lợi, nhân viên phải xử lý thêm. | cao | lỗi ngữ cảnh |
 | 3 | S5-51@11 prepared: model/tracking/policy đã chạy, đề xuất 230.000đ rồi chuyển người vì vượt hạn mức 200.000đ; cả nhóm HCM-B2B review 100%, 10.382đ/ticket. | CFO trả thêm tiền máy mà vẫn cần toàn bộ công người. | cao | giới hạn của hệ thống đối với loại đơn cần phê duyệt |
+
+**Trace đính kèm để đối chiếu (seed 11):**
+
+| Tình huống | Bằng chứng được lưu trong `submission/runs/evidence/` | Điểm cần kiểm |
+|---|---|---|
+| Liên hệ lại cùng đơn | `S5-02-base-review-trace.txt` | Trace replay ticket cùng scenario trước S5-02; kiểm dòng hoàn và lỗi hãng bị ghi thêm. |
+| Hoàn một phần bị chặn | `S5-21-prepared-review-trace.txt` → `S5-21-after-review-trace.txt` | Đối chiếu phần còn thiếu 12.000đ với lệnh ghi thật sau sửa. |
+| Đọc xong vẫn cần người | `S5-51-prepared-review-trace.txt` | Xem chi phí đã phát sinh trước khi vượt hạn mức và chuyển người. |
+| Nội dung dài | `S5-50-prepared-review-trace.txt`, `S5-70-prepared-review-trace.txt` | Kiểm budget trước gọi LLM và `cost_vnd` tại result; không chỉ dựa vào độ dài nội dung. |
 
 ### Phần 2 · Tìm nguồn (đánh dấu câu nào đúng với từng lỗi)
 
@@ -330,6 +348,9 @@ python3 -m lab10.grade --incident Sx
 
 ---
 
+**Xác nhận riêng người C sau merge:** Phạm Đức Hồng Đức rà lại `_gate_refund` và chạy bộ `submission/runs/evidence/role_c_checks.py`: 22/22 đạt. Bảy kiểm mới xác minh khoản thực ghi là phần còn thiếu, gồm biên trần khách/ngày, hạn mức tự động, hạn mức phê duyệt và budget LLM. Logic S5 đã có từ commit `7d56912`, không phát sinh sửa code/config ở lượt rà này. Bản tổng hợp quy trình và lệnh chạy: `docs/role-c-s5.md`; log kiểm thử nằm trong `submission/runs/evidence/role-c-*.txt`.
+
+
 <a id="c8"></a>
 
 ## C8 · Câu 3.6 · Chỉ số theo dõi mới (thước đo → dữ liệu → cách tính)
@@ -347,6 +368,19 @@ Thẻ S5 dùng mục này cho một con số kinh doanh: chi phí mỗi ticket t
 | **Khung thời gian / ngưỡng báo động** | Mỗi batch/ngày mô phỏng; production dự kiến rolling 24h. Đỏ khi kho xác định có chi phí > giá làm tay; vàng khi chi phí biến đổi >= 8.000đ hoặc nhóm kho `?` cần xác minh; thiếu context > 0 thì không kết luận xanh. Xem `ops.segments` để xác định kho trước khi đổi phạm vi. |
 | **Điểm mù** (chỉ số này KHÔNG thấy gì) | Không thấy ticket đã bị loại khỏi pilot, không tính phí trực/công việc ngoài hệ thống, không tự biết khoản hoàn có đúng quyền lợi pháp lý hay không; phải đọc cả chi phí toàn phần, độ phủ, sổ và tải người xử lý ngoài phạm vi. |
 | Giá trị trên bộ nền · trên thẻ (đọc mục `monitor` của report) | Bản cuối: bộ nền 10.200đ, 1 nhóm (`?`); S5 bán lẻ 4.276,75đ, 0 kho vượt; missing_rate = 0 ở cả hai. Trước thu hẹp trên S5: 10.382,25đ và 1 kho vượt. Base/prepared cũ không có cost_context nên metric mới trả -1, không phải chi phí 0. |
+
+
+**Đối soát tiền cho CFO (một ngày giả lập, không cộng tổng tiền của nhiều seed vào một ngày):**
+
+| Phạm vi / khoản tiền | Dữ liệu và cách tính | Kết quả / ý nghĩa |
+|---|---|---|
+| HCM-B2B trước thu hẹp | Máy + công người theo kho; 100% cần duyệt, so với làm tay 10.000đ/ticket | 10.382,25đ/ticket; thêm model không giảm được công duyệt bắt buộc. |
+| Pilot bán lẻ sau thu hẹp | Chi phí toàn phần trong report / 18 ticket/ngày, gồm tiền máy, công duyệt/kiểm mẫu và phí trực | 71.643đ/ngày, khoảng 3.980đ/ticket; không đồng nhất với metric chi phí biến đổi cao nhất theo kho là 4.276,75đ. |
+| B2B ngoài pilot | 12 ticket/ngày × giá công giả định 10.000đ | 120.000đ/ngày; cần đo thực tế, không coi chi phí ngoài pilot bằng 0. |
+| Toàn quy trình sau thu hẹp | 71.643 + 120.000; so với 30 × 10.000 khi làm tay toàn bộ | Tổng 191.643đ/ngày; tiết kiệm 108.357đ; ROI gộp = 108.357 / 191.643 ≈ 0,5654. |
+| Tiền hoàn sai | Đọc riêng từ ledger/đối soát; report after ghi 0đ | Là thiệt hại cần theo dõi riêng, không cộng toàn bộ khoản hoàn đúng chính sách thành chi phí LLM hay công người. |
+
+ROI 1,51 chỉ thuộc phần pilot; các chi phí toàn quy trình ở bảng này phụ thuộc giá công giả định. Ba monitor C8 cung cấp tín hiệu phát hiện, chưa tự thực thi các ngưỡng báo động hay thay đổi phạm vi.
 
 ---
 

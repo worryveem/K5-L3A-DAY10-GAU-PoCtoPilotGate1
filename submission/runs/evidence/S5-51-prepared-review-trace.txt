@@ -1,0 +1,15 @@
+== S5-51 @ seed 11 · suite S5 · stage prepared ==
+TICKET: Đơn sỉ về chậm cả tuần, quầy hết hàng bán. Đề nghị bồi thường.
+  00 ticket           {"ticket_id": "S5-51", "seed": 11, "channel": "app"}
+  01 guard            {"kind": "order_identity_verified", "order_id": "O-2551"}
+  02 guard            {"kind": "policy_pinned", "policy_id": "REFUND-v3", "as_of": "2026-11-16"}
+  03 llm_extract      {"intent": "LATE", "claimed_delay_days": null, "trust_claim": false, "directive": null}
+  04 tracking         {"order_id": "O-2551", "db_delay_days": 8, "cause": "CARRIER", "cause_recorded": true, "parcels": [{"parcel_id": "O-2551-P1", "carrier_id": "DNB", "delay": 8}]}
+  05 policy           {"policy_id": "REFUND-v3", "pinned": true}
+  06 proposal         {"amount_vnd": 230000, "payer": "LOGIX", "basis": "policy", "delay_days_used": 8, "do_fault": true}
+  07 result           {"status": "escalated", "amount_vnd": 0, "reason": "vượt hạn mức tự động, chưa có phê duyệt", "cost_vnd": 565}
+SỔ CÁI   : []
+LỖI HÃNG : []
+GỬI HÃNG : []
+NHÃN     : {"status": ["escalated"], "refund_vnd": 0, "faults": [], "payer": "LOGIX"}
+KẾT QUẢ  : ĐẠT {}
