@@ -1,0 +1,15 @@
+test_file_carrier_fault_blocks_duplicate_and_daily_strike_cap (__main__.CarrierAndPiiGateChecks.test_file_carrier_fault_blocks_duplicate_and_daily_strike_cap) ... ok
+test_file_carrier_fault_rejects_ambiguous_multi_carrier_delay (__main__.CarrierAndPiiGateChecks.test_file_carrier_fault_rejects_ambiguous_multi_carrier_delay) ... ok
+test_file_carrier_fault_rejects_unknown_parcel_bad_status_and_cause (__main__.CarrierAndPiiGateChecks.test_file_carrier_fault_rejects_unknown_parcel_bad_status_and_cause) ... ok
+test_file_carrier_fault_requires_ledger_row (__main__.CarrierAndPiiGateChecks.test_file_carrier_fault_requires_ledger_row) ... ok
+test_file_carrier_fault_syncs_delayed_parcel_in_multiparcels (__main__.CarrierAndPiiGateChecks.test_file_carrier_fault_syncs_delayed_parcel_in_multiparcels) ... ok
+test_notify_carrier_requires_fault_and_strips_all_pii (__main__.CarrierAndPiiGateChecks.test_notify_carrier_requires_fault_and_strips_all_pii) ... ok
+test_gift_order_zero_pii_leak_end_to_end (__main__.ReplyAndOpsConfigChecks.test_gift_order_zero_pii_leak_end_to_end) ... ok
+test_operations_and_legal_gates_config_and_staff_trust (__main__.ReplyAndOpsConfigChecks.test_operations_and_legal_gates_config_and_staff_trust) ... ok
+test_reply_gate_syncs_ledger_amount_and_denial_wording (__main__.ReplyAndOpsConfigChecks.test_reply_gate_syncs_ledger_amount_and_denial_wording) ... ok
+test_s5_21_end_to_end_partial_refund_and_carrier_fault (__main__.ReplyAndOpsConfigChecks.test_s5_21_end_to_end_partial_refund_and_carrier_fault) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.152s
+
+OK

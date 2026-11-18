@@ -38,6 +38,8 @@ Mỗi lệnh `lab10.eval` và `lab10.grade` tự ghi một dòng vào `runs/jour
 | 6 | `R-S5-after-20261118-221839-b4f9ee` | S5 · after | Người C tái kiểm cổng hoàn phần còn thiếu, trần và phê duyệt trên code đã merge; không đổi code/config | 1,0 [1,0; 1,0] | 1,0 | 0đ · 0 · 0 | 0,1667 | 90/90 đạt, 60% độ phủ; 22 kiểm C, 13 công khai và 10 kiểm S5 đạt. |
 | 7 | `R-base-after-20261118-221840-b4f9ee` | base · after | Người C kiểm regression sau rà S5; không đổi code/config | 1,0 [1,0; 1,0] | 1,0 | 0đ · 0 · 0 | 0,2273 | 110/110 đạt, giữ 100% độ phủ và không có ca mới hỏng. |
 | 8 | `R-S5-after-20261118-223940-b4f9ee` (grade `R-S5-grade-20261118-223940-b4f9ee`) | S5 · after | Người B đối chiếu trace, fault tree và monitor trên bản cuối; không đổi code/config | 1,0 [1,0; 1,0] | 1,0 | 0đ · 0 · 0 | 0,1667 | PASS-VISIBLE: integrity, visible, regression, monitor đạt; 60% độ phủ, 3.980đ/ticket, ROI 1,51. |
+| 9 | `R-S5-after-20261118-232158-b4f9ee` | S5 · after | Người D kiểm chứng cổng hãng/PII/reply, hàng chờ và runbook trên bản cuối; không đổi code/config | 1,0 [1,0; 1,0] | 1,0 | 0đ · 0 · 0 | 0,1667 | 90/90 đạt, 60% độ phủ (18 pilot, 12 B2B thủ công); 0 lỗi hãng, 0 PII, 0 ca ùn, 10/10 kiểm D đạt. |
+| 10 | `R-base-after-20261118-232159-b4f9ee` (grade `R-S5-grade-20261118-232159-b4f9ee`) | base · after / grade S5 | Người D kiểm regression vận hành/pháp lý và chốt kiểm chứng toàn phần sau rà S5; không đổi code/config | 1,0 [1,0; 1,0] | 1,0 | 0đ · 0 · 0 | 0,2273 | Bộ nền 110/110 đạt (4.442đ/ticket, ROI 1,25, 0 ca ùn); grade S5 PASS-VISIBLE đủ 5 mục nhìn thấy. |
 
 Grade cuối trước gom bài: `R-S5-grade-20261118-173643-b4f9ee` = PASS-VISIBLE; chưa có test ẩn. Quyết định v1 và snapshot giữ nguyên.
 
@@ -266,6 +268,9 @@ Tool chọn phân tích: `issue_refund` và đường đi từ đọc ticket t�
 | Phạm vi và ngân sách | INCAPABLE | S5-51@11 cần phê duyệt vượt 200.000đ; HCM-B2B 100% chuyển người. | Mỗi ticket B2B tốn 10.382đ > làm tay. | Budget chỉ giới hạn LLM, không loại công người. | Thu hẹp theo kho có số liệu và monitor chi phí theo kho; tầng vận hành/phát hiện. |
 | Nội dung dài | PERTURBED | S5-50: 5.227 ký tự; base có LLM cao nhất 2.412đ trong gói. | Chi phí máy tăng vì độ dài khách gửi. | Prepared chặn trước đọc với trần 1.500đ. | Giữ budget, không nới trần để làm xanh test; giới hạn thiệt hại. |
 | Hai tiến trình cùng đọc ledger | WRONG | Chưa thấy trên trace: hai tiến trình có thể cùng đọc số dư cũ trước khi ghi. | Hoàn vượt dù từng tiến trình tự kiểm đúng. | Mô phỏng chạy tuần tự, chưa có khóa/giao dịch nguyên tử. | Giữ vào risk register; backend cần khóa hoặc idempotency nguyên tử, không tuyên bố đã ngăn trong production. |
+| Luồng CSKH thủ công cho B2B & đối soát `send_reply`/`file_carrier_fault` khi hoàn bù | INCAPABLE / PERTURBED | Thu hẹp cắt 12 ca `HCM-B2B`/ngày ra ngoài pilot nên `ops.queue` không phản ánh tải B2B; hoặc hoàn bù phần thiếu (`S5-21`) nếu `send_reply`/`file_carrier_fault` báo lệch số tiền/ghi lỗi oan cho `MKD`. | Quá tải người trực `NV-HANH` vào giờ cao điểm nếu cộng cả 12 ca B2B, hoặc khách nhận tin sai số tiền/hãng bị phạt sai. | `_gate_reply` đồng bộ số tiền sổ cái (`12.000đ`), `_gate_carrier` đối chiếu `H.carrier_at_fault`; Runbook 4–5 giao `NV-HANH` theo dõi gộp. | Giám sát gộp `out_of_scope_per_day` + `peak_review_arrivals_per_hour` theo Runbook 4–5; giữ nguyên cổng D tầng chặn và vận hành. |
+
+**Rà soát bổ sung của người D:** hoàn bù `S5-21` đi qua đủ `_gate_refund` (sửa `22.000đ -> 12.000đ`), `_gate_carrier` (ghi đúng 1 lỗi `MKD` trên `O-2521-P1`), `notify_carrier` (0 PII) và `_gate_reply` (báo đúng `12.000đ`). Tải thủ công 12 ca `HCM-B2B`/ngày phải được theo dõi ngoài `ops.queue`.
 
 Bắt buộc: ít nhất ba dòng, trong đó **một dòng là nhánh bàn chưa thấy trên trace** lúc viết.
 
@@ -355,6 +360,8 @@ python3 -m lab10.grade --incident Sx
 
 **Xác nhận riêng người C sau merge:** Phạm Đức Hồng Đức rà lại `_gate_refund` và chạy bộ `submission/runs/evidence/role_c_checks.py`: 22/22 đạt. Bảy kiểm mới xác minh khoản thực ghi là phần còn thiếu, gồm biên trần khách/ngày, hạn mức tự động, hạn mức phê duyệt và budget LLM. Logic S5 đã có từ commit `7d56912`, không phát sinh sửa code/config ở lượt rà này. Bản tổng hợp quy trình và lệnh chạy: `docs/role-c-s5.md`; log kiểm thử nằm trong `submission/runs/evidence/role-c-*.txt`.
 
+**Xác nhận riêng người D sau merge:** Bùi Lê Công Tuấn (`2A202603610`) rà lại `_gate_carrier`, `_sanitize_carrier_payload`, `_gate_reply` và cấu hình `operations`/`legal` trong `config/operating_gates.json` trên bản đóng băng `b4f9eee86d33`, chạy bộ kiểm `submission/runs/evidence/role_d_checks.py`: **10/10 đạt** (kiểm chứng chặn lỗi hãng thiếu sổ cái, đa kiện lệch/mơ hồ, trạng thái kiện, trần 2 lỗi/hãng/ngày, lọc sạch PII đơn quà tặng, đồng bộ reply hoàn bù `12.000đ` ở `S5-21`, và thỏa mãn điều kiện lòng tin nhân viên `trust == "đạt"` khi bật kiểm lại). Không phát sinh sửa code/config; hồ sơ chi tiết ở `docs/role-d-s5.md` và log tại `submission/runs/evidence/role-d-s5-checks.txt`.
+
 
 <a id="c8"></a>
 
@@ -426,6 +433,7 @@ Người B xác nhận cây sau sửa với grade `R-S5-grade-20261118-223940-b4
 | Chi phí ngoài phạm vi bị bỏ khỏi phép tính ROI | Có thể xảy ra khi chỉ đọc cột after | Cao: tưởng có lời nhưng tổng quy trình lỗ | Phạm Đức Hồng Đức | `coverage < 1`, `ops.out_of_scope_per_day`, chi phí thủ công phải cộng riêng | Đối soát cả 12 ca B2B/ngày và giá công thật, không quảng bá ROI pilot là ROI toàn bộ 30 ca | Chỉ giữ quyết định Thu hẹp khi giả định kinh tế còn đúng | MEASURE |
 | Telemetry thiếu hoặc kho chưa xác định che nhóm đắt | Bộ nền có nhóm `?` 10.200đ/ticket | Tăng chi phí và thiếu đường xử lý ngoại lệ | Vũ Đức Tâm | `cost_context_missing_rate > 0` hoặc `warehouses_over_manual_cost > 0`; xem `ops.segments` | Phân biệt kho xác định với `?`, xử lý định danh trước, không tắt toàn bộ để né cảnh báo | Cảnh báo chưa được giải thích thì không mở rộng pilot | MEASURE |
 | Checkpoint được tạo sau khi pull gói thẻ | Đã xảy ra | Tính hợp lệ trình tự lab cần được xem xét | Đỗ Minh Hoàng | `checkpoint.taken_at` 17:23:26 và commit tải thẻ 17:17:11 | Giữ nguyên chứng cứ, trình Lab Coach; không lùi thời gian hoặc sửa lịch sử | PASS-VISIBLE không xác nhận yêu cầu trình tự này | GOVERN |
+| Tải thủ công 12 ca `HCM-B2B`/ngày nằm ngoài `ops.queue` | Dễ xảy ra vào giờ cao điểm khi B2B đi thẳng CSKH | Cao: quá tải ẩn cho `NV-HANH`, trễ SLA 60 phút của đơn ngoài pilot | Bùi Lê Công Tuấn | `ops.out_of_scope_per_day = 12` kết hợp `peak_review_arrivals_per_hour > 4` | `NV-HANH` theo dõi gộp cả hàng chờ pilot (`3` ca/ngày) và `12` ca B2B thủ công; chạm ngưỡng gọi thêm người ở Runbook 5 | Không tự mở rộng lại `HCM-B2B` khi chưa đo tải thủ công thật | MANAGE |
 
 Quy tắc: **mỗi dòng phải đổi được một quyết định.** Cột "Dấu hiệu" phải là một metric có trong `monitors.py` hoặc trong report.
 
@@ -447,8 +455,8 @@ Ghi các dòng đổi sau sự cố. Mỗi dòng vẫn phải có một PIC có 
 | 4 Quyền hạn | Xong trên mô phỏng | Cổng phần còn thiếu và retry, phê duyệt/trần giữ nguyên | Phạm Đức Hồng Đức |
 | 5 Hiệu năng/hạ tầng | Chưa đo production | LLM max 765đ, 0 ca ùn; chưa thử tải thật và provider outage thật | Vũ Đức Tâm |
 | 6 Chi phí | Xong cho phạm vi mô phỏng | S5 3.980đ/ticket, ROI 1,51 trên pilot 60%; chi phí ngoài pilot được tính riêng ở C12 | Phạm Đức Hồng Đức |
-| 7 Vận hành | Xong thiết kế, chưa triển khai thật | 1 người trực/6 ca giờ, Runbook 4–5; B2B đi quy trình CSKH | Bùi Lê Công Tuấn |
-| 8 Con người/pháp lý | Xong trên test nhìn thấy | 0 lỗi hãng oan, 0 PII; giữ kiểm mẫu 10% và decision_note | Bùi Lê Công Tuấn |
+| 7 Vận hành | Xong thiết kế, chưa triển khai thật | 1 người trực/6 ca giờ, Runbook 4–5; B2B đi quy trình CSKH; xác nhận người D `R-S5-after-20261118-232158-b4f9ee` (`queue.stuck = 0`, `trust` thỏa khi bật kiểm) | Bùi Lê Công Tuấn |
+| 8 Con người/pháp lý | Xong trên test nhìn thấy | 0 lỗi hãng oan, 0 PII; giữ kiểm mẫu 10% và `decision_note`; 10/10 kiểm D (`role_d_checks.py`) đạt | Bùi Lê Công Tuấn |
 | 9 Quyết định | Xong v2, còn hạn chế trình tự | C12 chọn Thu hẹp; checkpoint muộn được ghi tại B8/C10, chưa có xác nhận của Coach | Đỗ Minh Hoàng |
 
 ### Runbook 4 · Sau sự cố trên thẻ (vòng 2)

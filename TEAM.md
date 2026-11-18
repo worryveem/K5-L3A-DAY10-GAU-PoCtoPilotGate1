@@ -108,10 +108,21 @@ Vận hành và pháp lý (D): nhánh `_gate_carrier` (`file_carrier_fault`, `no
 - Bộ test công khai: `python -m unittest discover -s tests -v` (`Ran 13 tests ... OK`).
 - Phiếu A: `templates/form-a-criteria.md` (A1 câu 1.2, A2 câu 1.4); Phiếu B: `templates/form-b-evaluation-gates.md` (B0 dòng 8, B4, B5, B7.1 G4–G5, B7.5, B7.6).
 
+### Bổ sung vòng 2 · S5 (sau merge main)
+
+- Kiểm chứng lại toàn bộ phần việc vai D trên bản đóng băng cuối (`code_hash = b4f9eee86d33`) không sửa đổi logic/config đã chốt và không đổi cột quyết định v1/v2.
+- Khôi phục byte LF gốc cho 19 file bị khóa trên Windows để khớp `lab10/MANIFEST.json` (`1 integrity ✅`), xác nhận `criteria` (`e781e465`) và `checkpoint` (`57b93087`) đều còn nguyên.
+- Viết và chạy bộ kiểm chứng chuyên biệt phần D tại `submission/runs/evidence/role_d_checks.py` (log: `submission/runs/evidence/role-d-s5-checks.txt`): **10/10** kiểm tra đạt (chặn ghi lỗi hãng thiếu sổ cái, đồng bộ đa kiện `P2`, từ chối đa kiện mơ hồ khác hãng, từ chối `parcel_id` lạ/trạng thái `CANCELLED` & `RETURNED`/thiếu `delay_cause`, chặn trùng & trần 2 lỗi/hãng/ngày, lọc sạch PII đơn quà tặng `O-1024`/`O-1026`, đồng bộ reply hoàn bù `12.000đ` ở `S5-21`, kiểm cấu hình `operations`/`legal` và điều kiện `trust == "đạt"`).
+- Chạy xác nhận:
+  - `S5 · after` (`R-S5-after-20261118-232158-b4f9ee`): `90/90` đạt trong pilot 60% (`18` ca/ngày pilot, `12` ca B2B ngoài phạm vi), `wrongful_refund_vnd = 0`, `wrongful_carrier_faults = 0`, `pii_leaks = 0`, `cost_per_ticket_vnd = 3980đ`, `ROI = 1.51`, `queue.stuck = 0`, không vượt trần.
+  - `base · after` (`R-base-after-20261118-232159-b4f9ee`): `110/110` đạt, độ phủ 100%, không có ca mới hỏng (`4442đ/ticket`, `ROI = 1.25`).
+  - `lab10.grade --incident S5` (`R-S5-grade-20261118-232159-b4f9ee`): **`PASS-VISIBLE (chưa chạy test ẩn)`** (`integrity ✅`, `criteria ✅`, `visible ✅`, `regression ✅`, `monitor ✅`).
+- Hồ sơ chi tiết phần D: `docs/role-d-s5.md` (và `submission/docs/role-d-s5.md`), cập nhật Phiếu C (`C0` dòng 9–10, `C4`, `C7`, `C10` dòng PIC Bùi Lê Công Tuấn, `C11`), lưu báo cáo kiểm chứng vào `submission/runs/evidence/`.
+
 ### Exit ticket
 
-- Điều học được: cổng chặn ở tầng hệ thống (`write_gate`, `operating_gates.json`) giúp ngăn lỗi oan cho bên thứ ba và rò rỉ PII mà không phụ thuộc vào prompt.
-- Điều còn chưa chắc: hành vi hàng chờ và chi phí khi có sự cố đột biến ở Vòng 2 (cần kiểm chứng thêm sau khi kéo thẻ và chạy `grade`).
+- Điều học được: cổng chặn ở tầng hệ thống (`write_gate`, `operating_gates.json`) giúp ngăn lỗi oan cho bên thứ ba và rò rỉ PII mà không phụ thuộc vào prompt; ở S5, việc tách riêng đường B2B ra khỏi pilot đòi hỏi Runbook và Risk register phải theo dõi cả tải thủ công ngoài `ops.queue` chứ không chỉ đọc `queue.stuck = 0` trong pilot.
+- Điều còn chưa chắc: tải thực tế của `12` ca `HCM-B2B`/ngày khi cộng dồn vào hàng chờ của `NV-HANH` trong giờ cao điểm và giá công thủ công `10.000đ/ticket` ngoài dữ liệu mock có giữ ổn định khi chạy pilot thật hay không.
 
 ## VuDucTam-2A202603522
 
