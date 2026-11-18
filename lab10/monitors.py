@@ -19,7 +19,48 @@ def escalation_rate(trials):
     return sum(t["status"] == "escalated" for t in trials) / max(1, len(trials))
 
 
+def model_override_rate(trials):
+    """Tỷ lệ lượt xử lý có model thay số liệu DB bằng số khách khai."""
+    return sum(
+        any(event.get("type") == "model_override" for event in trial.get("events", []))
+        for trial in trials
+    ) / max(1, len(trials))
+
+
+def peak_review_arrivals_per_hour(trials):
+    """Số ca cần người nhiều nhất trong một giờ của cùng ngày và seed."""
+    hourly = {}
+    for trial in trials:
+        if trial.get("review_kind") is None or trial.get("arrive_min") is None:
+            continue
+        key = (trial.get("day"), trial.get("seed"), int(trial["arrive_min"]) // 60)
+        hourly[key] = hourly.get(key, 0) + 1
+    return max(hourly.values(), default=0)
+
+
+def carrier_fault_delay_mismatch_rate(trials):
+    """Tỷ lệ bản ghi lỗi hãng có số ngày trễ khác tracking đã đọc."""
+    compared = 0
+    mismatched = 0
+    for trial in trials:
+        tracked = {
+            parcel.get("parcel_id"): parcel.get("delay")
+            for event in trial.get("events", []) if event.get("type") == "tracking"
+            for parcel in event.get("parcels", [])
+        }
+        for fault in trial.get("faults", []):
+            parcel_id = fault.get("parcel_id")
+            if parcel_id not in tracked:
+                continue
+            compared += 1
+            mismatched += fault.get("delay_days") != tracked[parcel_id]
+    return mismatched / max(1, compared)
+
+
 MONITORS = {
     "escalation_rate": escalation_rate,     # có sẵn; KHÔNG tính là metric mới của đội
+    "model_override_rate": model_override_rate,
+    "peak_review_arrivals_per_hour": peak_review_arrivals_per_hour,
+    "carrier_fault_delay_mismatch_rate": carrier_fault_delay_mismatch_rate,
 }
 STARTER_MONITORS = ("escalation_rate",)

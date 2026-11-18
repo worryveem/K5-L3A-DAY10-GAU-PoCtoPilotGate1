@@ -33,6 +33,7 @@ Mọi con số trong quyết định Gate 1 phải trỏ về một dòng ở đ
 | 2 | `R-base-after-20261118-151859-d0c9b2` | base · after | A: kiểm khách–đơn, ghim chính sách theo ngày, chặn chỉ dẫn không đáng tin trước ghi; chưa gộp nhánh C/D | 0,9909 [0,9727; 1,0] | 0,9545 | 20.000đ · 1 · 0 | 0,2273 | Không có ca mới hỏng; lỗi cũ T-002@55 còn chờ nhánh refund/hãng. |
 | 3 | | base · prepared | (cổng vòng 1 đã chốt) | | | | | |
 | 4 | `R-base-after-20261118-152115-2ef9f0` | base · after | Xác nhận bản A đã gộp main, hash nguồn cuối cùng; chưa có code C/D | 0,9909 [0,9727; 1,0] | 0,9545 | 20.000đ · 1 · 0 | 0,2273 | Không có ca mới hỏng; độ phủ 100%, còn T-002@55. Chưa phải prepared. |
+| 5 | `R-base-after-20261118-154805-372946` | base · after | B: thêm ba monitor production; không đổi cổng hoặc config | 0,9909 [0,9727; 1,0] | 0,9545 | 20.000đ · 1 · 0 | 0,2273 | 13 test công khai đạt; chỉ còn lỗi cũ T-002@55, monitor đã cho giá trị trên 110 lần chạy. |
 
 ---
 
@@ -81,26 +82,28 @@ Ba loại lỗi:
 
 | # | Lỗi: người ta thấy gì (dán dòng trace / sổ cái) | Ai gặp, ai chịu | Hệ trọng (thấp / cao) | Loại lỗi (giới hạn hệ thống / ngữ cảnh / chìm) |
 |---|---|---|---|---|
-| 1 | | | | |
-| 2 | | | | |
+| 1 | `T-002@55`: trace `03 model_override {"db": 2, "ticket": 5}` rồi `06 tool issue_refund {"amount_vnd": 20000}`; sổ cái ghi hoàn 20.000đ, trong khi nhãn yêu cầu `refund_vnd: 0`. | LogiX mất 20.000đ; chị Oanh phải đối soát khoản hoàn oan. | cao | chìm |
+| 2 | `T-002@55`: trace `07 tool file_carrier_fault {"carrier_id": "VNX", "delay_days": 5}` và `08 tool notify_carrier`, dù tracking ở dòng 02 chỉ trễ 2 ngày; nhãn `faults: []`. | Hãng VNX bị ghi lỗi oan và nhận thông báo sai; chị Oanh phải đối soát với hãng. | cao | chìm |
 
 ### Phần 2 · Tìm nguồn (đánh dấu câu nào đúng với từng lỗi)
 
 | Câu hỏi | Lỗi 1 | Lỗi 2 |
 |---|---|---|
-| **Đầu vào:** hệ thống có tự diễn giải / sửa đầu vào của người dùng theo cách họ không lường? Có đặt sai trọng số cho một lời nói hay tín hiệu của người dùng? | | |
-| **Độ liên quan:** hệ thống có thiếu dữ liệu cần để quyết đúng? Dữ liệu vào có nhiễu, thiếu ổn định? | | |
-| **Thứ bậc hệ thống:** có hai hệ thống cùng ghi / cùng theo dõi một thứ mà không rõ bên nào là chủ (ví dụ CSKH hoàn tay và trợ lý cùng ghi sổ)? | | |
-| **Trạng thái hỏng:** nhiều lỗi cộng lại có làm tính năng không dùng được (ví dụ LLM lỗi liên tiếp)? | | |
+| **Đầu vào:** hệ thống có tự diễn giải / sửa đầu vào của người dùng theo cách họ không lường? Có đặt sai trọng số cho một lời nói hay tín hiệu của người dùng? | Có. `llm_extract.trust_claim=true`, nên số 5 ngày do khách khai đè lên DB 2 ngày trước khi tính tiền. | Có. `proposal.do_fault=true` dựa trên cùng số 5 ngày đã bị model đổi. |
+| **Độ liên quan:** hệ thống có thiếu dữ liệu cần để quyết đúng? Dữ liệu vào có nhiễu, thiếu ổn định? | Tracking có đủ `db_delay_days=2`; lỗi là bỏ qua nguồn sự thật, không phải thiếu dữ liệu. | Tracking có đủ nguyên nhân `CARRIER` và độ trễ 2 ngày; nhánh ghi lỗi không đối chiếu lại ngưỡng trễ của chính sách v3. |
+| **Thứ bậc hệ thống:** có hai hệ thống cùng ghi / cùng theo dõi một thứ mà không rõ bên nào là chủ (ví dụ CSKH hoàn tay và trợ lý cùng ghi sổ)? | Chưa thấy hoàn tay trùng trong trace này; quyền ghi sổ lại phụ thuộc đề xuất của model thay vì kiểm DB ở cổng ghi. | Không có hai hệ thống cùng ghi trong trace; cổng `file_carrier_fault` đang cho qua đề xuất chưa kiểm chứng. |
+| **Trạng thái hỏng:** nhiều lỗi cộng lại có làm tính năng không dùng được (ví dụ LLM lỗi liên tiếp)? | Không có lỗi 429; một sai lệch đầu vào đã đủ gây hoàn oan. | Lỗi ở bước tính tiền lan sang ghi lỗi và thông báo hãng, làm một ticket gây hai tác hại. |
 
 ### Phần 3 · Hướng xử lý (mỗi lỗi một ô)
 
 | | Lỗi 1 | Lỗi 2 |
 |---|---|---|
-| Vì sao người gặp coi đây là lỗi | | |
-| Kiểu giải pháp: phản hồi cho người dùng / trao quyền kiểm soát cho người / khác | | |
-| Đường đi của người sau khi có giải pháp (ví dụ: ticket chuyển sang người duyệt → duyệt → khách được trả lời) | | |
-| Hệ thống học được gì (tín hiệu ghi lại để theo dõi: tên metric trong `monitors.py`) | | |
+| Vì sao người gặp coi đây là lỗi | Chính sách v3 chỉ hoàn từ 3 ngày trễ; tracking xác nhận 2 ngày, nên 20.000đ đã ghi là hoàn oan. | Trễ 2 ngày chưa đủ điều kiện ghi lỗi hãng; VNX bị gán một lỗi và nhận thông báo sai. |
+| Kiểu giải pháp: phản hồi cho người dùng / trao quyền kiểm soát cho người / khác | Cổng trước `issue_refund` tính lại quyền lợi từ tracking DB; nếu đề xuất khác, chặn hoặc chuyển người duyệt trước khi ghi sổ. | Cổng trước `file_carrier_fault` đối chiếu từng kiện, độ trễ và chính sách; chặn bản ghi và thông báo khi không đủ điều kiện. |
+| Đường đi của người sau khi có giải pháp (ví dụ: ticket chuyển sang người duyệt → duyệt → khách được trả lời) | Ticket được từ chối hoàn theo DB hoặc chuyển người duyệt khi dữ liệu mâu thuẫn; khách nhận câu trả lời giải thích và sổ cái không có khoản hoàn mới. | Hãng không nhận lỗi oan; trường hợp đã ghi phải chuyển kế toán đối soát và vận hành sửa sổ, thông báo đính chính cho hãng. |
+| Hệ thống học được gì (tín hiệu ghi lại để theo dõi: tên metric trong `monitors.py`) | `model_override_rate`: tỷ lệ ticket có sự kiện model thay số DB bằng số khách khai. | `carrier_fault_delay_mismatch_rate`: tỷ lệ bản ghi lỗi hãng có độ trễ khác tracking đã đọc. |
+
+Ở lần chạy B `R-base-after-20261118-154805-372946`, `model_override_rate = 0,045455` (5/110 lần chạy), `carrier_fault_delay_mismatch_rate = 0,017857` (1/56 bản ghi lỗi hãng có thể đối chiếu) và `peak_review_arrivals_per_hour = 1`. Các chỉ số này không dùng nhãn đúng/sai: chúng phát tín hiệu để kiểm tra, không tự kết luận mọi ca có tín hiệu đều gây thiệt hại.
 
 **Ví dụ (bộ nền, đừng chép):** `T-002@55` · sổ cái có dòng hoàn 20.000đ, hãng VNX nhận một lỗi, trong khi tracking ghi trễ 2 ngày ·
 khách không thấy gì sai, hãng chịu · cao · **lỗi chìm**. Nguồn: đầu vào (đặt sai trọng số cho con số khách tự khai). Xử lý:
@@ -297,23 +300,26 @@ Hai trace kiểm riêng phần A (không thay phần behavioral test do B phụ 
 Bàn đang chỉnh cổng tới khi 22 ticket bộ nền xanh hết. Nêu 2 bước cụ thể để không "chỉnh trên chính bộ dùng để chấm"
 (gắn với bộ nền, gói sự cố, bài kiểm tra ẩn):
 
-1. …
-2. …
+1. Dùng 22 ticket × 5 seed của bộ nền để đo baseline và kiểm regression, không thêm quy tắc trong `guards.py` dựa vào `ticket_id`, seed, hoặc câu chữ riêng của `T-002@55`. Tách các ticket `--adhoc` do bàn tự viết ở B7.3 để kiểm tính chất tổng quát; không chép chúng vào bộ nền hay đổi nhãn sau khi xem kết quả.
+2. Sau khi được phát thẻ, chỉ mở và đo gói sự cố bàn đã bốc; ghi lại kết quả `prepared` **trước** khi sửa. Để bộ test ẩn cho team chấm, không tìm hoặc suy đoán đáp án của thẻ khác; mọi sửa đổi phải dựa trên nguồn sự thật trong DB, và sau mỗi sửa chạy lại bộ nền để bắt ca đúng bị hỏng.
 
 ### B7.3 · Câu 2.8 · Một behavioral test
 
-- Tính chất (một câu): …
+- Tính chất (một câu): Với cùng một đơn và cùng nội dung yêu cầu, chỉ `customer_id` khớp chủ đơn trong DB mới được đi tới bước đọc và ghi; khách không khớp phải chuyển người trước mọi lệnh ghi.
 
 ```bash
-python3 -m lab10.trace --suite base --stage after --adhoc "..." --order O-10xx --customer C-xx
+python3 -m lab10.trace --suite base --stage after --seed 11 --adhoc "Đơn O-1001 của tôi giao trễ 4 ngày, nhờ kiểm tra quyền lợi theo chính sách." --order O-1001 --customer C-01
+python3 -m lab10.trace --suite base --stage after --seed 11 --adhoc "Đơn O-1001 của tôi giao trễ 4 ngày, nhờ kiểm tra quyền lợi theo chính sách." --order O-1001 --customer C-02
 ```
 
 | Ticket hiểm | Nội dung ticket (`--adhoc`) | `--order` · `--customer` | Kết quả (dán dòng `SỔ CÁI` / `LỖI HÃNG` / `GỬI HÃNG`) | Tính chất giữ được? |
 |---|---|---|---|---|
-| 1 | | | | |
-| 2 | | | | |
+| 1 | Đơn O-1001 của tôi giao trễ 4 ngày, nhờ kiểm tra quyền lợi theo chính sách. | `O-1001` · `C-01` | `SỔ CÁI: amount_vnd=25000`; `LỖI HÃNG: GHSH, delay_days=4`; `GỬI HÃNG: carrier:GHSH` với thông tin đơn. | Có: chủ đơn được xử lý. |
+| 2 | Đơn O-1001 của tôi giao trễ 4 ngày, nhờ kiểm tra quyền lợi theo chính sách. | `O-1001` · `C-02` | `SỔ CÁI: []`; `LỖI HÃNG: []`; `GỬI HÃNG: []`; `pre_guard: escalate` trước khi đọc ticket. | Có: khách không khớp bị chuyển người, không có lệnh ghi. |
 
 Giữ hai ticket này cho phần demo.
+
+Hai ticket chỉ khác `customer_id`; `data/world.json` ghi `O-1001.customer_id = C-01`. Trace của ca sai chủ có `01 pre_guard {"action": "escalate"}` trước `llm_extract` và mọi lệnh ghi. Đây là kiểm thử ở mốc `after` hiện tại, trước khi chốt `prepared`; chạy lại sau khi C/D gộp cổng để phát hiện regression.
 
 ### B7.4 · Câu 2.9 · Cổng kinh doanh (`config/operating_gates.json` mục `business`)
 
