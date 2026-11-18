@@ -251,11 +251,15 @@ Bốn lăng kính (bắt buộc đủ cả bốn; dự án AI hay chết ở ba 
 
 | Lý do thất bại (viết ở thì quá khứ) | Lăng kính | Kiểm được hôm nay? (trace / data / config nào) | Thành cổng phòng ngừa nào (code hay config) / hay vào risk register |
 |---|---|---|---|
-| | Kỹ thuật | | |
-| | Kinh doanh | | |
-| | Con người và vận hành | | |
-| | Pháp lý | | |
-| | | | |
+| Pilot đã áp dụng chính sách cũ sau ngày đổi phiên bản vì tin cờ `index_active`. | Kỹ thuật | Khoảng `effective_from`/`effective_to` trong `data/world.json`; `agent.py` chọn cờ active nếu không được ghim. | Chọn G1 của A: `pre_guard` ghim chính sách duy nhất có hiệu lực theo `ctx.as_of`; thiếu hoặc chồng lấn thì chuyển người. |
+| Pilot đã đọc và xử lý yêu cầu của người không đứng tên đơn hoặc của kiện không thuộc đơn. | Kỹ thuật | `ticket.customer_id`, `order.customer_id`, danh sách `order.parcels`; tra bằng `lookup_order`. | Chọn G2 của A: kiểm khách–đơn và kiện được chỉ định trước khi model đọc ticket. |
+| Pilot đã coi chỉ dẫn trong ticket hoặc ghi chú checkout là quyền bỏ qua chính sách và đổi người trả tiền. | Kỹ thuật | `agent.py` đọc cả ticket và `checkout_note`, rồi dùng `plan.directive`; trace có `llm_extract`, `llm_extract_note`, `directive_obeyed`. | Chọn G3 của A: kiểm dấu hiệu model đã nhận chỉ dẫn từ dữ liệu không đáng tin trước mỗi lệnh ghi; chuyển người trước khi ghi. C vẫn cần kiểm số tiền và phê duyệt từ DB trong nhánh refund. |
+| Pilot đã hoàn sai và ghi oan cho hãng vì lấy số ngày khách khai thay tracking. | Kỹ thuật | Baseline `R-base-before-20261118-151553-0176af`, `T-002@55`: DB 2 ngày, model dùng 5 ngày, hoàn 20.000đ và ghi 1 lỗi hãng. | Phần C/D cần hoàn thiện: tính lại quyền lợi từ DB trong `_gate_refund`, kiểm lỗi hãng trong `_gate_carrier`; chưa đánh dấu là đã sửa. |
+| Pilot đã tốn hơn làm tay ở một nhóm yêu cầu, dù chi phí trung bình vẫn thấp. | Kinh doanh | Baseline có phân khúc kho `?` tốn 10.359đ/ticket; `ops_facts` cho mức làm tay 10.000đ. | C cần phân tích phạm vi và chi phí; giữ vào risk register cho tới khi có biện pháp và bằng chứng sau sửa. |
+| Pilot đã ùn hàng chờ vì ticket dồn trong một giờ vượt công suất người trực. | Con người và vận hành | `ops_facts`: 6 ca/giờ/người; `ops_limits`: SLA 60 phút; config người trực và report hàng chờ. | D cần hoàn thiện người trực/runbook, B cần monitor theo giờ; số 0 ca ùn ở baseline chưa kiểm được đợt dồn việc. |
+| Pilot đã gửi dữ liệu người nhận sang hãng qua ghi chú khách hoặc payload liên hệ lồng nhau. | Pháp lý | `agent.py` tạo `customer_note` và `recipient_contact`; `tools.py` chỉ lọc các khóa bị chặn ở cấp đầu. | D cần lọc payload theo trường được phép và đặt legal config; B theo dõi dữ liệu gửi ra ngoài. |
+
+Các dòng ở thì quá khứ là giả định pre-mortem trước khi nhận thẻ; số tác hại thực đo chỉ được ghi ở dòng có mã baseline. G1–G3 là ba cổng A sẽ triển khai trong bước này.
 
 ---
 
