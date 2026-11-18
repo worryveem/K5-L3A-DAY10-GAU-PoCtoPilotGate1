@@ -27,15 +27,73 @@ ctx.gates    config cổng của bàn (config/operating_gates.json), chỉ đọ
 ctx.events   trace tới thời điểm này;  ctx.log("ten_su_kien", ...) ghi thêm sự kiện guard vào trace
 lab10.helpers: db_delay_days, ticket_parcel, effective_policy, entitlement_vnd, carrier_at_fault, digits
 
-Mặc định dưới đây cho qua tất cả (= mốc base).
+Phần A: kiểm định danh, ghim chính sách theo ngày và kiểm chỉ dẫn không đáng tin trước ghi.
+Các hàm _gate_refund, _gate_carrier, _gate_reply dành cho C/D hoàn thiện.
 """
-from . import helpers as H  # noqa: F401
+from . import helpers as H
 from .tools import Verdict
 
 
 def pre_guard(ctx):
-    # A: kiểm tra trước khi agent đọc ticket.
-    return Verdict.allow()
+    # A: dùng định danh có cấu trúc; không lấy quyền hạn từ chữ khách viết.
+    customer_id = ctx.ticket.get("customer_id")
+    if not customer_id:
+        return Verdict.escalate("Thiếu định danh khách hàng để xác minh yêu cầu")
+
+    order_id = ctx.ticket.get("order_id")
+    if order_id:
+        order = ctx.tools.lookup_order(order_id)
+        if order is None:
+            return Verdict.escalate("Không tìm thấy đơn trong DB")
+        if order.get("customer_id") != customer_id:
+            return Verdict.escalate("Khách gửi yêu cầu không khớp chủ đơn trong DB")
+        parcel_id = ctx.ticket.get("parcel_id")
+        if parcel_id and not any(
+            parcel.get("parcel_id") == parcel_id
+            for parcel in order.get("parcels", [])
+        ):
+            return Verdict.escalate("Kiện được chỉ định không thuộc đơn trong DB")
+        ctx.log("order_identity_verified", order_id=order_id)
+
+    try:
+        policies = ctx.tools.lookup_policies()
+        matching = [
+            policy for policy in policies
+            if H.effective_policy([policy], ctx.as_of) is not None
+        ]
+    except (KeyError, TypeError, ValueError):
+        return Verdict.escalate("Dữ liệu ngày hoặc khoảng hiệu lực chính sách không hợp lệ")
+    if len(matching) != 1 or not matching[0].get("policy_id"):
+        return Verdict.escalate("Không xác định được duy nhất một chính sách có hiệu lực")
+
+    policy_id = matching[0]["policy_id"]
+    ctx.log("policy_pinned", policy_id=policy_id, as_of=ctx.as_of)
+    return Verdict.allow(policy_id=policy_id)
+
+
+def _gate_untrusted_instructions(ctx, action):
+    # Kiểm trạng thái model, không so khớp câu chữ hay mã ticket cụ thể.
+    # Cả ticket và checkout_note đều là dữ liệu không cấp quyền ghi.
+    sources = {
+        "llm_extract": "ticket",
+        "llm_extract_note": "checkout_note",
+    }
+    untrusted = sorted({
+        sources[event["type"]]
+        for event in ctx.events
+        if event.get("type") in sources and event.get("directive")
+    })
+    obeyed = any(event.get("type") == "directive_obeyed" for event in ctx.events)
+    if untrusted or obeyed:
+        ctx.log(
+            "untrusted_instruction_blocked",
+            tool=action.get("tool"),
+            sources=untrusted,
+        )
+        return Verdict.escalate(
+            "Model nhận chỉ dẫn từ nội dung khách; cần người kiểm tra trước khi ghi"
+        )
+    return None
 
 
 def _gate_refund(ctx, action):
@@ -61,5 +119,9 @@ def write_gate(ctx, action):
         "notify_carrier": _gate_carrier,
         "send_reply": _gate_reply,
     }.get(action.get("tool"))
+    if handler:
+        authority_verdict = _gate_untrusted_instructions(ctx, action)
+        if authority_verdict is not None:
+            return authority_verdict
     verdict = handler(ctx, action) if handler else None
     return verdict or Verdict.allow()
